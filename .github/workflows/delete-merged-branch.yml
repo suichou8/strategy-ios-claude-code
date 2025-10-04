@@ -1,0 +1,20 @@
+name: Delete Merged Branch
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  delete-branch:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Delete merged branch
+        uses: SvanBoxel/delete-merged-branch@v1.4.3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 排除的分支（不会被删除）
+          exclude: main, master, develop, staging, production
+          # 删除分支后发送通知
+          delete_closed_pr: false
