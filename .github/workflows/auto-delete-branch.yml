@@ -1,0 +1,92 @@
+name: Auto Delete Branch
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  delete-branch:
+    runs-on: ubuntu-latest
+    # 只在 PR 被合并后执行，不在单纯关闭时执行
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Delete merged branch
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo } = context.repo;
+            const branch = context.payload.pull_request.head.ref;
+            const headRepoOwner = context.payload.pull_request.head.repo?.owner?.login;
+
+            // 检查是否是 fork 的 PR
+            if (headRepoOwner && headRepoOwner !== owner) {
+              console.log(`Skipping branch deletion: PR from fork (${headRepoOwner}/${branch})`);
+              return;
+            }
+
+            // 检查是否是保护分支
+            const protectedBranches = ['main', 'master', 'develop', 'staging', 'production'];
+            if (protectedBranches.includes(branch)) {
+              console.log(`Skipping deletion of protected branch: ${branch}`);
+              return;
+            }
+
+            try {
+              // 删除分支
+              await github.rest.git.deleteRef({
+                owner: owner,
+                repo: repo,
+                ref: `heads/${branch}`
+              });
+
+              console.log(`✅ Successfully deleted branch: ${branch}`);
+
+              // 在 PR 中添加评论
+              await github.rest.issues.createComment({
+                owner: owner,
+                repo: repo,
+                issue_number: context.payload.pull_request.number,
+                body: `🗑️ Branch \`${branch}\` has been automatically deleted after merge.`
+              });
+
+            } catch (error) {
+              console.error(`Failed to delete branch ${branch}:`, error.message);
+
+              // 如果删除失败，也在 PR 中添加评论
+              if (error.status === 403) {
+                await github.rest.issues.createComment({
+                  owner: owner,
+                  repo: repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `⚠️ Could not delete branch \`${branch}\` - insufficient permissions. You may need to delete it manually.`
+                });
+              } else if (error.status === 422) {
+                console.log(`Branch ${branch} may be protected or already deleted.`);
+              }
+            }
+
+  # 处理 PR 被关闭但未合并的情况（可选）
+  notify-closed:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == false
+
+    steps:
+      - name: Comment on closed PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `ℹ️ This PR was closed without merging. Branch \`${branch}\` has been kept. \n\nIf you want to delete it manually, run:\n\`\`\`bash\ngit push origin --delete ${branch}\n\`\`\``
+            });
