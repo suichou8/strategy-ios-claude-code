@@ -3,9 +3,9 @@
 ## 项目概览
 **项目名称**: strategy-ios-claude-code
 **项目类型**: iOS 股票数据分析应用
-**最低系统版本**: iOS 15.0+
+**最低系统版本**: iOS 17.0+ (需要 SwiftData)
 **开发语言**: Swift 5.9+
-**UI框架**: SwiftUI (主要) + UIKit (图表组件)
+**UI框架**: SwiftUI (纯 SwiftUI 开发)
 **后端API**: FastAPI (Python) - 已部署在 Vercel
 
 ## 后端API集成
@@ -42,9 +42,10 @@ GET  /api/v1/health               // 服务状态
 ### 整体架构
 - **设计模式**: MVVM + Clean Architecture
 - **依赖管理**: Swift Package Manager (SPM)
-- **数据流**: SwiftUI State Management + Combine
+- **数据流**: SwiftUI State Management + Observation Framework
 - **网络层**: async/await + URLSession
-- **本地存储**: Core Data + UserDefaults + Keychain
+- **本地存储**: SwiftData + UserDefaults + Keychain
+- **CI/CD**: GitHub Actions
 
 ### 项目结构
 ```
@@ -63,7 +64,10 @@ strategy-ios-claude-code/
 │   │   ├── Storage/                # 数据存储
 │   │   │   ├── KeychainManager.swift
 │   │   │   ├── UserDefaultsManager.swift
-│   │   │   └── CoreDataManager.swift
+│   │   │   ├── SwiftDataContainer.swift
+│   │   │   └── Models/
+│   │   │       ├── CachedStock.swift
+│   │   │       └── UserPreference.swift
 │   │   ├── Extensions/             # Swift扩展
 │   │   ├── Utilities/              # 工具类
 │   │   └── Constants/              # 常量定义
@@ -97,17 +101,23 @@ strategy-ios-claude-code/
 │       └── Production.xcconfig
 ├── StrategyiOSTests/               # 单元测试
 ├── StrategyiOSUITests/             # UI测试
-└── StrategyiOS.xcodeproj/         # Xcode项目文件
+├── Package.swift                   # SPM 包定义文件
+└── .github/
+    └── workflows/
+        └── ios.yml                 # GitHub Actions CI/CD
 ```
 
 ## 技术栈
 
 ### 核心技术
-- **UI框架**: SwiftUI 5.0
+- **UI框架**: SwiftUI 5.0 (iOS 17+)
+- **数据持久化**: SwiftData (iOS 17新特性)
 - **网络请求**: URLSession + async/await
-- **响应式编程**: Combine Framework
-- **依赖注入**: @EnvironmentObject + @StateObject
-- **路由导航**: NavigationStack (iOS 16+)
+- **响应式编程**: Observation Framework (iOS 17+)
+- **依赖注入**: @Environment + @Observable
+- **路由导航**: NavigationStack + NavigationPath
+- **构建工具**: Swift Package Manager
+- **CI/CD**: GitHub Actions
 
 ### 第三方库
 ```swift
@@ -159,15 +169,87 @@ func fetchStockData(symbol: String, completion: @escaping (Result<StockModel, Er
 
 ## 核心功能实现
 
-### 1. 认证管理器
+### 1. SwiftData 配置
+```swift
+import SwiftData
+import Foundation
+
+// SwiftData 模型定义
+@Model
+final class CachedStock {
+    @Attribute(.unique) var symbol: String
+    var name: String
+    var currentPrice: Double
+    var changePercent: Double
+    var lastUpdate: Date
+    var isFavorite: Bool = false
+
+    init(symbol: String, name: String, currentPrice: Double, changePercent: Double) {
+        self.symbol = symbol
+        self.name = name
+        self.currentPrice = currentPrice
+        self.changePercent = changePercent
+        self.lastUpdate = Date()
+    }
+}
+
+@Model
+final class UserPreference {
+    var theme: String = "system"
+    var refreshInterval: Int = 30
+    var defaultWatchlist: [String] = []
+    var notificationEnabled: Bool = true
+
+    init() {}
+}
+
+// SwiftData 容器配置
+actor DataContainer {
+    static let shared = DataContainer()
+
+    private let container: ModelContainer
+    private let context: ModelContext
+
+    init() throws {
+        let schema = Schema([
+            CachedStock.self,
+            UserPreference.self
+        ])
+
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            allowsSave: true
+        )
+
+        container = try ModelContainer(
+            for: schema,
+            configurations: [config]
+        )
+
+        context = ModelContext(container)
+    }
+
+    func save() throws {
+        try context.save()
+    }
+
+    func fetch<T: PersistentModel>(_ descriptor: FetchDescriptor<T>) throws -> [T] {
+        try context.fetch(descriptor)
+    }
+}
+```
+
+### 2. 认证管理器 (iOS 17 @Observable)
 ```swift
 import Foundation
 import Security
+import Observation
 
-@MainActor
-class AuthManager: ObservableObject {
-    @Published var isAuthenticated = false
-    @Published var currentUser: User?
+@Observable
+class AuthManager {
+    var isAuthenticated = false
+    var currentUser: User?
 
     private let keychainKey = "com.strategy.ios.token"
     private let apiClient: APIClient
@@ -268,22 +350,50 @@ actor APIClient {
 }
 ```
 
-### 3. 股票数据服务
+### 4. 股票数据服务 (集成 SwiftData)
 ```swift
 import Foundation
-import Combine
+import SwiftData
+import Observation
 
-@MainActor
-class StockService: ObservableObject {
-    @Published var stocks: [StockModel] = []
-    @Published var isLoading = false
-    @Published var error: Error?
+@Observable
+class StockService {
+    var stocks: [StockModel] = []
+    var isLoading = false
+    var error: Error?
 
     private let apiClient: APIClient
-    private var cancellables = Set<AnyCancellable>()
+    private let dataContainer: DataContainer
 
-    init(apiClient: APIClient = .shared) {
+    init(apiClient: APIClient = .shared, dataContainer: DataContainer = .shared) {
         self.apiClient = apiClient
+        self.dataContainer = dataContainer
+        Task {
+            await loadCachedStocks()
+        }
+    }
+
+    // 从 SwiftData 加载缓存数据
+    private func loadCachedStocks() async {
+        do {
+            let descriptor = FetchDescriptor<CachedStock>(
+                sortBy: [SortDescriptor(\.symbol)]
+            )
+            let cached = try await dataContainer.fetch(descriptor)
+
+            await MainActor.run {
+                self.stocks = cached.map { cache in
+                    StockModel(
+                        symbol: cache.symbol,
+                        name: cache.name,
+                        currentPrice: cache.currentPrice,
+                        changePercent: cache.changePercent
+                    )
+                }
+            }
+        } catch {
+            print("Failed to load cached stocks: \(error)")
+        }
     }
 
     func fetchKLineData(
@@ -327,7 +437,7 @@ class StockService: ObservableObject {
 }
 ```
 
-### 4. SwiftUI视图示例
+### 5. SwiftUI视图示例 (iOS 17 新特性)
 ```swift
 import SwiftUI
 
@@ -363,6 +473,32 @@ struct StockListView: View {
         }
         .task {
             await viewModel.loadInitialData()
+        }
+    }
+}
+
+// 主应用入口 (iOS 17 新方式)
+@main
+struct StrategyiOSApp: App {
+    @State private var authManager = AuthManager()
+    @State private var stockService = StockService()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environment(authManager)
+                .environment(stockService)
+                .modelContainer(for: [
+                    CachedStock.self,
+                    UserPreference.self
+                ]) { result in
+                    switch result {
+                    case .success(let container):
+                        print("SwiftData container initialized")
+                    case .failure(let error):
+                        fatalError("Failed to initialize SwiftData: \(error)")
+                    }
+                }
         }
     }
 }
@@ -546,82 +682,165 @@ class StrategyiOSUITests: XCTestCase {
 
 ## CI/CD配置
 
-### GitHub Actions
+### GitHub Actions (主要CI/CD工具)
 ```yaml
-name: iOS CI
+# .github/workflows/ios.yml
+name: iOS CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'feature/**' ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  release:
+    types: [created]
+
+env:
+  XCODE_VERSION: '15.0'
+  IOS_VERSION: '17.0'
+  SCHEME: 'StrategyiOS'
 
 jobs:
   test:
-    runs-on: macos-latest
+    name: Test
+    runs-on: macos-14  # M1 Mac for faster builds
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Select Xcode
-      run: sudo xcode-select -s /Applications/Xcode_15.0.app
+      run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
 
-    - name: Run tests
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v1
+      with:
+        swift-version: '5.9'
+
+    - name: Cache SPM
+      uses: actions/cache@v3
+      with:
+        path: ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+
+    - name: Resolve Dependencies
+      run: |
+        xcodebuild -resolvePackageDependencies \
+          -scheme ${{ env.SCHEME }} \
+          -clonedSourcePackagesDirPath ~/Library/Developer/Xcode/DerivedData
+
+    - name: Run Unit Tests
       run: |
         xcodebuild test \
-          -scheme StrategyiOS \
-          -destination 'platform=iOS Simulator,name=iPhone 15'
+          -scheme ${{ env.SCHEME }} \
+          -sdk iphonesimulator \
+          -destination 'platform=iOS Simulator,OS=${{ env.IOS_VERSION }},name=iPhone 15 Pro' \
+          -enableCodeCoverage YES \
+          -resultBundlePath TestResults
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: test-results
+        path: TestResults
+
+  build:
+    name: Build
+    runs-on: macos-14
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+    - name: Build App
+      run: |
+        xcodebuild build \
+          -scheme ${{ env.SCHEME }} \
+          -sdk iphoneos \
+          -configuration Release \
+          -archivePath $PWD/build/StrategyiOS.xcarchive \
+          archive
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts
+        path: build/
+
+  deploy:
+    name: Deploy to TestFlight
+    runs-on: macos-14
+    needs: build
+    if: github.event_name == 'release'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Deploy to TestFlight
+      env:
+        APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      run: |
+        echo "Deploy to TestFlight"
+        # xcrun altool or fastlane commands here
 ```
 
-### Fastlane配置
-```ruby
-# Fastfile
-platform :ios do
-  desc "Run tests"
-  lane :test do
-    run_tests(
-      scheme: "StrategyiOS",
-      devices: ["iPhone 15"]
-    )
-  end
+### Swift Package Manager 配置
+```swift
+// Package.resolved (自动生成)
+// 该文件由 SPM 自动管理，用于锁定依赖版本
+// 需要提交到 Git 以确保团队成员使用相同版本
+```
 
-  desc "Deploy to TestFlight"
-  lane :beta do
-    build_app(scheme: "StrategyiOS")
-    upload_to_testflight
-  end
-
-  desc "Deploy to App Store"
-  lane :release do
-    build_app(scheme: "StrategyiOS")
-    upload_to_app_store
-  end
-end
+### 本地开发配置
+```bash
+# .env.development (不提交到 Git)
+API_BASE_URL=https://strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app
+DEBUG_MODE=true
+ENABLE_NETWORK_LOGS=true
 ```
 
 ## 常用命令
 
 ```bash
-# 安装依赖
-xcodegen generate
-swift package resolve
+# Swift Package Manager 命令
+swift package init --type library  # 初始化包
+swift package resolve              # 解析依赖
+swift package update               # 更新依赖
+swift build                        # 构建项目
+swift test                         # 运行测试
 
-# 运行测试
-xcodebuild test -scheme StrategyiOS -destination 'platform=iOS Simulator,name=iPhone 15'
+# Xcode 命令
+xcodebuild -list                   # 列出所有 schemes
+xcodebuild test \
+  -scheme StrategyiOS \
+  -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,OS=17.0,name=iPhone 15 Pro'
 
-# 代码检查
-swiftlint
-swift-format lint -r Sources/
+# 代码质量
+swiftlint                          # 代码检查
+swift-format lint -r Sources/      # 格式检查
+swift-format format -i -r Sources/ # 代码格式化
 
-# 代码格式化
-swift-format format -i -r Sources/
+# 文档生成
+swift-doc generate Sources/ \
+  --module-name StrategyiOS \
+  --output ./docs
 
-# 生成文档
-swift-doc generate Sources/ --module-name StrategyiOS -o ./docs
-
-# 清理构建
+# 清理和重置
 xcodebuild clean -scheme StrategyiOS
 rm -rf ~/Library/Developer/Xcode/DerivedData
+rm -rf .build/
+rm Package.resolved  # 重置依赖
 ```
 
 ## 故障排查
@@ -645,6 +864,18 @@ rm -rf ~/Library/Developer/Xcode/DerivedData
 - 优化图片资源
 - 减少视图层级
 
+#### 4. SwiftData 问题
+- 确保模型使用 @Model 宏
+- 检查 ModelContainer 初始化
+- 处理迁移和版本更新
+- 使用 @Query 正确获取数据
+
+#### 5. SPM 依赖问题
+- 清理 DerivedData
+- 删除 Package.resolved 后重新 resolve
+- 检查网络代理设置
+- 使用国内镜像源
+
 ## 开发注意事项
 
 ### Claude Code使用规范
@@ -663,6 +894,12 @@ rm -rf ~/Library/Developer/Xcode/DerivedData
 4. **版本兼容**：保持API版本兼容性
 
 ## 项目特定规则
+- **最低系统要求**: iOS 17.0 (因为使用 SwiftData)
+- **纯 SwiftUI 开发**: 不使用 UIKit，除非绝对必要
+- **使用 Swift Package Manager**: 不使用 CocoaPods 或 Carthage
+- **GitHub Actions 作为 CI/CD**: 主要自动化工具
+- **SwiftData 持久化**: 替代 Core Data
+- **Observation Framework**: 替代 Combine 用于状态管理
 - 所有网络请求必须包含时间戳参数
 - 股票代码使用大写格式
 - 时间使用UTC格式，显示时转换为本地时间
@@ -671,4 +908,5 @@ rm -rf ~/Library/Developer/Xcode/DerivedData
 
 ---
 *最后更新: 2024-10-05*
-*版本: 1.0.0*
+*版本: 2.0.0*
+*主要更新: 迁移到 iOS 17 + SwiftData + SPM + GitHub Actions*
