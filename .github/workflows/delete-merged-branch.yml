@@ -1,8 +1,12 @@
-name: Delete Merged Branch
+name: Delete Merged Branch (Simple)
 
 on:
   pull_request:
     types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   delete-branch:
@@ -11,10 +15,22 @@ jobs:
 
     steps:
       - name: Delete merged branch
-        uses: SvanBoxel/delete-merged-branch@v1.4.3
+        uses: SvanBoxel/delete-merged-branch@v2.0.2
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # 排除的分支（不会被删除）
-          exclude: main, master, develop, staging, production
-          # 删除分支后发送通知
-          delete_closed_pr: false
+          ignore_branches: main,master,develop,staging,production
+
+      - name: Comment on successful deletion
+        uses: actions/github-script@v7
+        if: success()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `🗑️ Branch \`${branch}\` has been automatically deleted after merge.`
+            });

@@ -38,27 +38,55 @@ jobs:
             }
 
             try {
-              // 删除分支
-              await github.rest.git.deleteRef({
-                owner: owner,
-                repo: repo,
-                ref: `heads/${branch}`
-              });
+              // 首先检查分支是否还存在
+              let branchExists = false;
+              try {
+                await github.rest.git.getRef({
+                  owner: owner,
+                  repo: repo,
+                  ref: `heads/${branch}`
+                });
+                branchExists = true;
+              } catch (checkError) {
+                if (checkError.status === 404) {
+                  console.log(`✅ Branch ${branch} already deleted (possibly by GitHub auto-delete)`);
 
-              console.log(`✅ Successfully deleted branch: ${branch}`);
+                  // 在 PR 中添加评论说明分支已被删除
+                  await github.rest.issues.createComment({
+                    owner: owner,
+                    repo: repo,
+                    issue_number: context.payload.pull_request.number,
+                    body: `✅ Branch \`${branch}\` was automatically cleaned up after merge.`
+                  });
+                  return;
+                } else {
+                  throw checkError;
+                }
+              }
 
-              // 在 PR 中添加评论
-              await github.rest.issues.createComment({
-                owner: owner,
-                repo: repo,
-                issue_number: context.payload.pull_request.number,
-                body: `🗑️ Branch \`${branch}\` has been automatically deleted after merge.`
-              });
+              if (branchExists) {
+                // 分支存在，尝试删除
+                await github.rest.git.deleteRef({
+                  owner: owner,
+                  repo: repo,
+                  ref: `heads/${branch}`
+                });
+
+                console.log(`✅ Successfully deleted branch: ${branch}`);
+
+                // 在 PR 中添加评论
+                await github.rest.issues.createComment({
+                  owner: owner,
+                  repo: repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `🗑️ Branch \`${branch}\` has been automatically deleted after merge.`
+                });
+              }
 
             } catch (error) {
               console.error(`Failed to delete branch ${branch}:`, error.message);
 
-              // 如果删除失败，也在 PR 中添加评论
+              // 如果删除失败，根据错误类型处理
               if (error.status === 403) {
                 await github.rest.issues.createComment({
                   owner: owner,
@@ -67,7 +95,29 @@ jobs:
                   body: `⚠️ Could not delete branch \`${branch}\` - insufficient permissions. You may need to delete it manually.`
                 });
               } else if (error.status === 422) {
-                console.log(`Branch ${branch} may be protected or already deleted.`);
+                console.log(`Branch ${branch} may be protected or invalid.`);
+                await github.rest.issues.createComment({
+                  owner: owner,
+                  repo: repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `ℹ️ Branch \`${branch}\` could not be deleted (may be protected).`
+                });
+              } else if (error.status === 404) {
+                console.log(`Branch ${branch} not found - may have been already deleted.`);
+                await github.rest.issues.createComment({
+                  owner: owner,
+                  repo: repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `✅ Branch \`${branch}\` was already cleaned up.`
+                });
+              } else {
+                // 其他未知错误
+                await github.rest.issues.createComment({
+                  owner: owner,
+                  repo: repo,
+                  issue_number: context.payload.pull_request.number,
+                  body: `❌ Error occurred while cleaning up branch \`${branch}\`: ${error.message}`
+                });
               }
             }
 
