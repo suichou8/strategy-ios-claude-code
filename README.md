@@ -1,4 +1,4 @@
-# stratege-claude-code
+# strategy-ios-claude-code
 
 A project created with Claude Code.
 
@@ -17,7 +17,7 @@ This project is hosted on GitHub.
 
 ```bash
 git clone [repository-url]
-cd stratege-claude-code
+cd strategy-ios-claude-code
 ```
 
 ## License
