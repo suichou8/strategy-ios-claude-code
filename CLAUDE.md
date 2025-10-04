@@ -1,248 +1,674 @@
-# Project Context for Claude Code
+# iOS 股票策略应用开发指南
 
-## Project Overview
-**Project Name**: strategy-ios-claude-code
-**Type**: iOS Application
-**Platform**: iOS 15.0+
-**Language**: Swift 5.9+
-**UI Framework**: SwiftUI / UIKit (specify preference)
+## 项目概览
+**项目名称**: strategy-ios-claude-code
+**项目类型**: iOS 股票数据分析应用
+**最低系统版本**: iOS 15.0+
+**开发语言**: Swift 5.9+
+**UI框架**: SwiftUI (主要) + UIKit (图表组件)
+**后端API**: FastAPI (Python) - 已部署在 Vercel
 
-## Architecture & Design Patterns
-- **Architecture**: MVVM / MVC / Clean Architecture / VIPER (choose one)
-- **Dependency Management**: Swift Package Manager (SPM) / CocoaPods / Carthage
-- **Design Patterns**:
-  - Coordinator for navigation
-  - Repository pattern for data layer
-  - Dependency Injection
+## 后端API集成
 
-## Project Structure
+### API环境配置
+- **生产环境URL**: `https://strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app`
+- **API文档**: `/docs`
+- **OpenAPI规范**: `/openapi.json`
+- **后端项目路径**: `/Users/shuaizhang/dev/claudeCode/strategy-claude-code`
+
+### JWT认证配置
+- **测试账号**: 用户名 `sui`，密码 `sui0617`
+- **令牌有效期**: 365天
+- **认证方式**: Bearer Token
+- **存储方案**: iOS Keychain
+
+### 核心API端点
+```swift
+// 认证相关
+POST /api/v1/auth/login          // 用户登录
+
+// 股票数据（需要认证）
+POST /api/v1/stocks/kline         // K线数据
+POST /api/v1/stocks/minute        // 分时数据
+POST /api/v1/stocks/realtime      // 实时行情
+GET  /api/v1/stocks/{symbol}/comprehensive  // 综合数据
+
+// 健康检查（无需认证）
+GET  /api/v1/health               // 服务状态
+```
+
+## 架构设计
+
+### 整体架构
+- **设计模式**: MVVM + Clean Architecture
+- **依赖管理**: Swift Package Manager (SPM)
+- **数据流**: SwiftUI State Management + Combine
+- **网络层**: async/await + URLSession
+- **本地存储**: Core Data + UserDefaults + Keychain
+
+### 项目结构
 ```
 strategy-ios-claude-code/
-├── App/
-│   ├── AppDelegate.swift
-│   ├── SceneDelegate.swift
-│   └── Info.plist
-├── Core/
-│   ├── Extensions/
-│   ├── Utilities/
-│   └── Constants/
-├── Features/
-│   ├── [FeatureName]/
-│   │   ├── Models/
-│   │   ├── Views/
-│   │   ├── ViewModels/
-│   │   └── Services/
-├── Resources/
-│   ├── Assets.xcassets
-│   ├── Localizable.strings
-│   └── LaunchScreen.storyboard
-├── Network/
-│   ├── APIClient.swift
-│   ├── Endpoints/
-│   └── Models/
-├── Storage/
-│   ├── CoreData/
-│   ├── UserDefaults/
-│   └── Keychain/
-└── Tests/
-    ├── UnitTests/
-    └── UITests/
+├── StrategyiOS/                    # 主应用目录
+│   ├── App/                        # 应用入口
+│   │   ├── StrategyiOSApp.swift
+│   │   ├── AppDelegate.swift
+│   │   └── Info.plist
+│   ├── Core/                       # 核心功能
+│   │   ├── Network/                # 网络层
+│   │   │   ├── APIClient.swift
+│   │   │   ├── APIEndpoint.swift
+│   │   │   ├── AuthManager.swift
+│   │   │   └── NetworkError.swift
+│   │   ├── Storage/                # 数据存储
+│   │   │   ├── KeychainManager.swift
+│   │   │   ├── UserDefaultsManager.swift
+│   │   │   └── CoreDataManager.swift
+│   │   ├── Extensions/             # Swift扩展
+│   │   ├── Utilities/              # 工具类
+│   │   └── Constants/              # 常量定义
+│   ├── Features/                   # 功能模块
+│   │   ├── Auth/                   # 认证模块
+│   │   │   ├── Models/
+│   │   │   ├── Views/
+│   │   │   └── ViewModels/
+│   │   ├── Stock/                  # 股票模块
+│   │   │   ├── Models/
+│   │   │   │   ├── StockModel.swift
+│   │   │   │   ├── KLineModel.swift
+│   │   │   │   └── RealtimeModel.swift
+│   │   │   ├── Views/
+│   │   │   │   ├── StockListView.swift
+│   │   │   │   ├── StockDetailView.swift
+│   │   │   │   └── KLineChartView.swift
+│   │   │   ├── ViewModels/
+│   │   │   │   ├── StockListViewModel.swift
+│   │   │   │   └── StockDetailViewModel.swift
+│   │   │   └── Services/
+│   │   │       └── StockService.swift
+│   │   └── Settings/               # 设置模块
+│   ├── Resources/                  # 资源文件
+│   │   ├── Assets.xcassets
+│   │   ├── Localizable.strings
+│   │   └── LaunchScreen.storyboard
+│   └── Config/                     # 配置文件
+│       ├── Development.xcconfig
+│       ├── Staging.xcconfig
+│       └── Production.xcconfig
+├── StrategyiOSTests/               # 单元测试
+├── StrategyiOSUITests/             # UI测试
+└── StrategyiOS.xcodeproj/         # Xcode项目文件
 ```
 
-## Technical Stack
-- **UI Framework**: SwiftUI / UIKit
-- **Networking**: URLSession / Alamofire
-- **Database**: Core Data / SQLite / Realm
-- **Async Programming**: async/await, Combine
-- **Image Loading**: Kingfisher / SDWebImage
-- **Analytics**: Firebase Analytics / Mixpanel
-- **Crash Reporting**: Crashlytics / Sentry
-- **CI/CD**: Xcode Cloud / GitHub Actions / Fastlane
+## 技术栈
 
-## Code Style & Conventions
+### 核心技术
+- **UI框架**: SwiftUI 5.0
+- **网络请求**: URLSession + async/await
+- **响应式编程**: Combine Framework
+- **依赖注入**: @EnvironmentObject + @StateObject
+- **路由导航**: NavigationStack (iOS 16+)
 
-### Swift Style Guide
-- Follow [Swift API Design Guidelines](https://swift.org/documentation/api-design-guidelines/)
-- Use SwiftLint with custom rules
-- Line length: 120 characters
-- Indentation: 4 spaces
-
-### Naming Conventions
-- **Classes/Structs**: PascalCase (e.g., `UserProfileViewController`)
-- **Functions/Variables**: camelCase (e.g., `fetchUserData()`)
-- **Constants**: camelCase with `k` prefix or UPPER_SNAKE_CASE
-- **Protocols**: Suffix with `Protocol`, `Delegate`, or `DataSource`
-- **Files**: Match the primary type name
-
-### File Organization
-- One type per file
-- Extensions in separate files when complex
-- Group related functionality using `// MARK: -` comments
-
-## Development Workflow
-
-### Branch Naming
-- `feature/ticket-number-description`
-- `bugfix/ticket-number-description`
-- `hotfix/ticket-number-description`
-- `release/version-number`
-
-### Commit Message Format
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-Types: feat, fix, docs, style, refactor, test, chore
-
-### Pull Request Template
-- Description of changes
-- Type of change (bug fix, feature, etc.)
-- Testing performed
-- Screenshots (for UI changes)
-- Checklist:
-  - [ ] Code follows style guidelines
-  - [ ] Self-review completed
-  - [ ] Tests added/updated
-  - [ ] Documentation updated
-
-## Build & Deployment
-
-### Build Configurations
-- **Debug**: Development environment
-- **Staging**: Testing environment
-- **Release**: Production environment
-
-### Environment Variables
+### 第三方库
 ```swift
-enum Environment {
-    case development
-    case staging
-    case production
+// Package.swift
+dependencies: [
+    // 图表库
+    .package(url: "https://github.com/danielgindi/Charts.git", from: "5.0.0"),
 
-    var baseURL: String {
-        switch self {
-        case .development: return "https://dev-api.example.com"
-        case .staging: return "https://staging-api.example.com"
-        case .production: return "https://api.example.com"
+    // 网络调试
+    .package(url: "https://github.com/kean/Pulse.git", from: "4.0.0"),
+
+    // 键盘管理
+    .package(url: "https://github.com/hackiftekhar/IQKeyboardManager.git", from: "6.5.0"),
+
+    // 下拉刷新
+    .package(url: "https://github.com/globulus/swiftui-pull-to-refresh.git", from: "1.0.0")
+]
+```
+
+## 开发规范
+
+### Swift编码规范
+- 遵循 [Swift API Design Guidelines](https://swift.org/documentation/api-design-guidelines/)
+- 使用 SwiftLint 进行代码检查
+- 代码行长度: 120字符
+- 缩进: 4个空格
+- 使用 `// MARK: -` 进行代码分组
+
+### 命名规范
+- **类/结构体**: 大驼峰 `StockDetailViewController`
+- **方法/变量**: 小驼峰 `fetchStockData()`
+- **常量**: 小驼峰加k前缀 `kDefaultTimeout`
+- **协议**: 添加Protocol后缀 `DataSourceProtocol`
+- **文件名**: 与主要类型名称一致
+
+### 异步编程规范
+```swift
+// 推荐: 使用 async/await
+func fetchStockData(symbol: String) async throws -> StockModel {
+    let data = try await apiClient.request(.stock(symbol))
+    return try decoder.decode(StockModel.self, from: data)
+}
+
+// 避免: 回调地狱
+func fetchStockData(symbol: String, completion: @escaping (Result<StockModel, Error>) -> Void) {
+    // ...
+}
+```
+
+## 核心功能实现
+
+### 1. 认证管理器
+```swift
+import Foundation
+import Security
+
+@MainActor
+class AuthManager: ObservableObject {
+    @Published var isAuthenticated = false
+    @Published var currentUser: User?
+
+    private let keychainKey = "com.strategy.ios.token"
+    private let apiClient: APIClient
+
+    init(apiClient: APIClient = .shared) {
+        self.apiClient = apiClient
+        checkAuthStatus()
+    }
+
+    func login(username: String, password: String) async throws {
+        let response = try await apiClient.login(
+            username: username,
+            password: password
+        )
+
+        // 保存Token到Keychain
+        try KeychainManager.shared.save(
+            response.accessToken,
+            forKey: keychainKey
+        )
+
+        isAuthenticated = true
+        currentUser = User(username: username)
+    }
+
+    func logout() {
+        KeychainManager.shared.delete(forKey: keychainKey)
+        isAuthenticated = false
+        currentUser = nil
+    }
+
+    private func checkAuthStatus() {
+        if let _ = try? KeychainManager.shared.load(forKey: keychainKey) {
+            isAuthenticated = true
         }
     }
 }
 ```
 
-### Code Signing
-- Automatic signing for development
-- Manual signing for distribution
-- Certificates stored in CI/CD keychain
-
-## Testing Strategy
-
-### Unit Tests
-- Minimum 70% code coverage
-- Test all ViewModels and business logic
-- Mock network calls and external dependencies
-
-### UI Tests
-- Test critical user flows
-- Screenshot tests for key screens
-- Accessibility testing
-
-### Test Naming Convention
+### 2. API客户端
 ```swift
-func test_methodName_condition_expectedResult() {
-    // Test implementation
+import Foundation
+
+actor APIClient {
+    static let shared = APIClient()
+
+    private let baseURL = "https://strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app"
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
+
+    func request<T: Decodable>(
+        _ endpoint: APIEndpoint,
+        responseType: T.Type = T.self
+    ) async throws -> T {
+        var request = URLRequest(url: endpoint.url(baseURL: baseURL))
+        request.httpMethod = endpoint.method.rawValue
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // 添加认证头
+        if endpoint.requiresAuth,
+           let token = try? KeychainManager.shared.load(forKey: "com.strategy.ios.token") {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        // 添加请求体
+        if let body = endpoint.body {
+            request.httpBody = try JSONEncoder().encode(body)
+        }
+
+        // 添加时间戳防止缓存
+        if endpoint.bypassCache {
+            let timestamp = Int(Date().timeIntervalSince1970 * 1000)
+            request.url?.append(queryItems: [
+                URLQueryItem(name: "timestamp", value: "\(timestamp)")
+            ])
+        }
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200...299:
+            return try JSONDecoder().decode(T.self, from: data)
+        case 401:
+            throw NetworkError.unauthorized
+        case 429:
+            throw NetworkError.rateLimited
+        default:
+            throw NetworkError.httpError(httpResponse.statusCode)
+        }
+    }
 }
 ```
 
-## Performance Guidelines
-- App launch time < 400ms
-- Frame rate: 60 FPS minimum
-- Memory usage monitoring
-- Network request optimization
-- Image caching and lazy loading
-
-## Security Requirements
-- Keychain for sensitive data
-- SSL pinning for API calls
-- Obfuscation for sensitive strings
-- No hardcoded credentials
-- Biometric authentication where appropriate
-
-## Accessibility
-- VoiceOver support
-- Dynamic Type support
-- Minimum contrast ratios (WCAG AA)
-- Semantic labels for all UI elements
-
-## Commands & Scripts
-
-### Common Commands
-```bash
-# Run tests
-xcodebuild test -scheme strategy-ios-claude-code -destination 'platform=iOS Simulator,name=iPhone 15'
-
-# Build for release
-xcodebuild archive -scheme strategy-ios-claude-code -archivePath ./build/Release.xcarchive
-
-# Run SwiftLint
-swiftlint
-
-# Format code
-swift-format -i -r Sources/
-
-# Generate documentation
-swift doc generate Sources/ --module-name StrategyiOS -o ./docs
-```
-
-### Fastlane Lanes (if using Fastlane)
-```bash
-fastlane ios test        # Run all tests
-fastlane ios beta        # Deploy to TestFlight
-fastlane ios release     # Deploy to App Store
-fastlane ios screenshots # Generate screenshots
-```
-
-## Dependencies
+### 3. 股票数据服务
 ```swift
-// Package.swift or Podfile content
-dependencies: [
-    .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.8.0"),
-    .package(url: "https://github.com/onevcat/Kingfisher.git", from: "7.0.0"),
-    // Add more as needed
-]
+import Foundation
+import Combine
+
+@MainActor
+class StockService: ObservableObject {
+    @Published var stocks: [StockModel] = []
+    @Published var isLoading = false
+    @Published var error: Error?
+
+    private let apiClient: APIClient
+    private var cancellables = Set<AnyCancellable>()
+
+    init(apiClient: APIClient = .shared) {
+        self.apiClient = apiClient
+    }
+
+    func fetchKLineData(
+        symbol: String,
+        period: KLinePeriod,
+        count: Int = 100
+    ) async throws -> KLineData {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let response: KLineResponse = try await apiClient.request(
+                .kline(symbol: symbol, period: period, count: count)
+            )
+
+            guard response.success, let data = response.klineData else {
+                throw NetworkError.apiError(response.message)
+            }
+
+            return data
+        } catch {
+            self.error = error
+            throw error
+        }
+    }
+
+    func fetchRealtimeData(symbols: [String]) async throws -> [RealtimeData] {
+        isLoading = true
+        defer { isLoading = false }
+
+        let response: RealtimeResponse = try await apiClient.request(
+            .realtime(symbols: symbols)
+        )
+
+        guard response.success else {
+            throw NetworkError.apiError(response.message)
+        }
+
+        return response.data
+    }
+}
 ```
 
-## App Store Information
-- **Bundle ID**: com.yourcompany.strategy-ios
-- **App Store Connect Team ID**: [YOUR_TEAM_ID]
-- **App Category**: [Category]
-- **Minimum iOS Version**: 15.0
-- **Supported Devices**: iPhone, iPad
+### 4. SwiftUI视图示例
+```swift
+import SwiftUI
 
-## Documentation
-- Code documentation using Swift DocC
-- README.md for setup instructions
-- CHANGELOG.md for version history
-- API documentation in `/docs`
+struct StockListView: View {
+    @StateObject private var viewModel = StockListViewModel()
+    @EnvironmentObject var authManager: AuthManager
 
-## Notes for Claude
-- Always check existing code style before making changes
-- Run tests before committing
-- Update documentation when adding new features
-- Follow the established project structure
-- Consider performance and security implications
-- Ensure accessibility compliance
-- Test on multiple device sizes
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(viewModel.stocks) { stock in
+                    NavigationLink(destination: StockDetailView(stock: stock)) {
+                        StockRowView(stock: stock)
+                    }
+                }
+            }
+            .refreshable {
+                await viewModel.refreshData()
+            }
+            .navigationTitle("股票列表")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("登出") {
+                        authManager.logout()
+                    }
+                }
+            }
+            .alert("错误", isPresented: $viewModel.showError) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text(viewModel.errorMessage)
+            }
+        }
+        .task {
+            await viewModel.loadInitialData()
+        }
+    }
+}
+```
 
-## Project-Specific Rules
-<!-- Add any project-specific rules or requirements here -->
--
--
--
+## 数据模型
+
+### 认证模型
+```swift
+struct LoginRequest: Codable {
+    let username: String
+    let password: String
+}
+
+struct LoginResponse: Codable {
+    let success: Bool
+    let message: String
+    let accessToken: String
+    let tokenType: String
+    let expiresIn: Int
+
+    enum CodingKeys: String, CodingKey {
+        case success, message
+        case accessToken = "access_token"
+        case tokenType = "token_type"
+        case expiresIn = "expires_in"
+    }
+}
+```
+
+### 股票数据模型
+```swift
+struct StockModel: Identifiable, Codable {
+    let id = UUID()
+    let symbol: String
+    let name: String
+    let currentPrice: Double
+    let changePercent: Double
+    let volume: Int
+    let marketCap: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case symbol, name
+        case currentPrice = "current_price"
+        case changePercent = "change_percent"
+        case volume
+        case marketCap = "market_cap"
+    }
+}
+
+struct KLineItem: Codable {
+    let datetime: String
+    let open: Double
+    let high: Double
+    let low: Double
+    let close: Double
+    let volume: Int
+}
+
+enum KLinePeriod: String, Codable {
+    case oneMin = "1min"
+    case fiveMin = "5min"
+    case fifteenMin = "15min"
+    case thirtyMin = "30min"
+    case sixtyMin = "60min"
+    case daily = "daily"
+}
+```
+
+## 测试策略
+
+### 单元测试
+```swift
+import XCTest
+@testable import StrategyiOS
+
+class AuthManagerTests: XCTestCase {
+    var authManager: AuthManager!
+    var mockAPIClient: MockAPIClient!
+
+    override func setUp() {
+        super.setUp()
+        mockAPIClient = MockAPIClient()
+        authManager = AuthManager(apiClient: mockAPIClient)
+    }
+
+    func test_login_withValidCredentials_shouldSucceed() async throws {
+        // Given
+        let username = "sui"
+        let password = "sui0617"
+        mockAPIClient.mockResponse = LoginResponse(
+            success: true,
+            message: "登录成功",
+            accessToken: "mock_token",
+            tokenType: "bearer",
+            expiresIn: 31536000
+        )
+
+        // When
+        try await authManager.login(username: username, password: password)
+
+        // Then
+        XCTAssertTrue(authManager.isAuthenticated)
+        XCTAssertNotNil(authManager.currentUser)
+    }
+}
+```
+
+### UI测试
+```swift
+import XCTest
+
+class StrategyiOSUITests: XCTestCase {
+    var app: XCUIApplication!
+
+    override func setUp() {
+        super.setUp()
+        app = XCUIApplication()
+        app.launch()
+    }
+
+    func test_loginFlow() {
+        // 输入用户名
+        let usernameField = app.textFields["用户名"]
+        usernameField.tap()
+        usernameField.typeText("sui")
+
+        // 输入密码
+        let passwordField = app.secureTextFields["密码"]
+        passwordField.tap()
+        passwordField.typeText("sui0617")
+
+        // 点击登录
+        app.buttons["登录"].tap()
+
+        // 验证进入主界面
+        XCTAssertTrue(app.navigationBars["股票列表"].exists)
+    }
+}
+```
+
+## 性能优化
+
+### 网络优化
+- 使用时间戳参数绕过CDN缓存获取最新数据
+- 实现请求去重和缓存机制
+- 批量请求合并优化
+- 使用HTTP/2多路复用
+
+### UI优化
+- 列表使用LazyVStack延迟加载
+- 图片异步加载和缓存
+- 避免在主线程进行复杂计算
+- 使用Instruments分析性能瓶颈
+
+### 内存优化
+- 及时释放大对象
+- 使用弱引用避免循环引用
+- 图片使用合适的分辨率
+- 监控内存泄漏
+
+## 安全要求
+
+### 数据安全
+- JWT Token必须存储在Keychain中
+- 敏感数据使用AES加密
+- 禁止在UserDefaults存储敏感信息
+- 日志中不能包含用户隐私数据
+
+### 网络安全
+- 强制使用HTTPS
+- 实现证书固定（SSL Pinning）
+- API请求添加签名验证
+- 实现请求防重放机制
+
+### 应用安全
+- 启用App Transport Security (ATS)
+- 代码混淆保护
+- 防止越狱设备运行
+- 实现生物识别认证
+
+## CI/CD配置
+
+### GitHub Actions
+```yaml
+name: iOS CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode_15.0.app
+
+    - name: Run tests
+      run: |
+        xcodebuild test \
+          -scheme StrategyiOS \
+          -destination 'platform=iOS Simulator,name=iPhone 15'
+```
+
+### Fastlane配置
+```ruby
+# Fastfile
+platform :ios do
+  desc "Run tests"
+  lane :test do
+    run_tests(
+      scheme: "StrategyiOS",
+      devices: ["iPhone 15"]
+    )
+  end
+
+  desc "Deploy to TestFlight"
+  lane :beta do
+    build_app(scheme: "StrategyiOS")
+    upload_to_testflight
+  end
+
+  desc "Deploy to App Store"
+  lane :release do
+    build_app(scheme: "StrategyiOS")
+    upload_to_app_store
+  end
+end
+```
+
+## 常用命令
+
+```bash
+# 安装依赖
+xcodegen generate
+swift package resolve
+
+# 运行测试
+xcodebuild test -scheme StrategyiOS -destination 'platform=iOS Simulator,name=iPhone 15'
+
+# 代码检查
+swiftlint
+swift-format lint -r Sources/
+
+# 代码格式化
+swift-format format -i -r Sources/
+
+# 生成文档
+swift-doc generate Sources/ --module-name StrategyiOS -o ./docs
+
+# 清理构建
+xcodebuild clean -scheme StrategyiOS
+rm -rf ~/Library/Developer/Xcode/DerivedData
+```
+
+## 故障排查
+
+### 常见问题
+
+#### 1. 网络请求失败
+- 检查网络权限配置
+- 验证API地址是否正确
+- 确认Token是否过期
+- 查看Charles/Proxyman抓包
+
+#### 2. Keychain访问失败
+- 检查Keychain权限配置
+- 确认Bundle ID一致
+- 处理首次安装情况
+
+#### 3. 性能问题
+- 使用Time Profiler分析
+- 检查主线程阻塞
+- 优化图片资源
+- 减少视图层级
+
+## 开发注意事项
+
+### Claude Code使用规范
+1. **始终检查现有代码风格**：修改前先了解项目规范
+2. **运行测试**：提交前确保所有测试通过
+3. **更新文档**：新功能必须更新相关文档
+4. **遵循项目结构**：按照既定目录结构组织代码
+5. **考虑性能影响**：评估新代码对性能的影响
+6. **确保无障碍**：所有UI元素支持VoiceOver
+7. **多设备测试**：在不同尺寸设备上测试
+
+### 与后端协作
+1. **API变更通知**：后端API变更需及时同步
+2. **错误码约定**：统一错误码处理规范
+3. **数据格式**：确保请求响应格式一致
+4. **版本兼容**：保持API版本兼容性
+
+## 项目特定规则
+- 所有网络请求必须包含时间戳参数
+- 股票代码使用大写格式
+- 时间使用UTC格式，显示时转换为本地时间
+- 金额显示保留两位小数
+- 百分比显示包含正负号
 
 ---
-*Last Updated: [Date]*
-*Version: 1.0.0*
+*最后更新: 2024-10-05*
+*版本: 1.0.0*
