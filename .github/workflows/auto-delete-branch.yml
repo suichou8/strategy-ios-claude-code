@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   delete-branch:
@@ -47,19 +46,13 @@ jobs:
                   ref: `heads/${branch}`
                 });
                 branchExists = true;
+                console.log(`Branch ${branch} exists, proceeding with deletion`);
               } catch (checkError) {
                 if (checkError.status === 404) {
                   console.log(`✅ Branch ${branch} already deleted (possibly by GitHub auto-delete)`);
-
-                  // 在 PR 中添加评论说明分支已被删除
-                  await github.rest.issues.createComment({
-                    owner: owner,
-                    repo: repo,
-                    issue_number: context.payload.pull_request.number,
-                    body: `✅ Branch \`${branch}\` was automatically cleaned up after merge.`
-                  });
                   return;
                 } else {
+                  console.log(`Error checking branch existence: ${checkError.message}`);
                   throw checkError;
                 }
               }
@@ -73,70 +66,22 @@ jobs:
                 });
 
                 console.log(`✅ Successfully deleted branch: ${branch}`);
-
-                // 在 PR 中添加评论
-                await github.rest.issues.createComment({
-                  owner: owner,
-                  repo: repo,
-                  issue_number: context.payload.pull_request.number,
-                  body: `🗑️ Branch \`${branch}\` has been automatically deleted after merge.`
-                });
               }
 
             } catch (error) {
               console.error(`Failed to delete branch ${branch}:`, error.message);
 
-              // 如果删除失败，根据错误类型处理
+              // 不要尝试添加评论，只记录错误
               if (error.status === 403) {
-                await github.rest.issues.createComment({
-                  owner: owner,
-                  repo: repo,
-                  issue_number: context.payload.pull_request.number,
-                  body: `⚠️ Could not delete branch \`${branch}\` - insufficient permissions. You may need to delete it manually.`
-                });
+                console.error(`❌ Insufficient permissions to delete branch ${branch}`);
               } else if (error.status === 422) {
-                console.log(`Branch ${branch} may be protected or invalid.`);
-                await github.rest.issues.createComment({
-                  owner: owner,
-                  repo: repo,
-                  issue_number: context.payload.pull_request.number,
-                  body: `ℹ️ Branch \`${branch}\` could not be deleted (may be protected).`
-                });
+                console.log(`⚠️ Branch ${branch} may be protected or invalid`);
               } else if (error.status === 404) {
-                console.log(`Branch ${branch} not found - may have been already deleted.`);
-                await github.rest.issues.createComment({
-                  owner: owner,
-                  repo: repo,
-                  issue_number: context.payload.pull_request.number,
-                  body: `✅ Branch \`${branch}\` was already cleaned up.`
-                });
+                console.log(`ℹ️ Branch ${branch} not found - may have been already deleted`);
               } else {
-                // 其他未知错误
-                await github.rest.issues.createComment({
-                  owner: owner,
-                  repo: repo,
-                  issue_number: context.payload.pull_request.number,
-                  body: `❌ Error occurred while cleaning up branch \`${branch}\`: ${error.message}`
-                });
+                console.error(`❌ Unexpected error: ${error.message}`);
               }
+
+              // 重新抛出错误以标记 Action 失败
+              throw error;
             }
-
-  # 处理 PR 被关闭但未合并的情况（可选）
-  notify-closed:
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == false
-
-    steps:
-      - name: Comment on closed PR
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const branch = context.payload.pull_request.head.ref;
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `ℹ️ This PR was closed without merging. Branch \`${branch}\` has been kept. \n\nIf you want to delete it manually, run:\n\`\`\`bash\ngit push origin --delete ${branch}\n\`\`\``
-            });
