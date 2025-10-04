@@ -1,4 +1,4 @@
-name: Delete Merged Branch (Simple)
+name: Auto Delete Branch
 
 on:
   pull_request:
