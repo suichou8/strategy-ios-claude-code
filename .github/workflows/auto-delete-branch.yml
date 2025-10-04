@@ -10,7 +10,6 @@ permissions:
 jobs:
   delete-branch:
     runs-on: ubuntu-latest
-    # 只在 PR 被合并后执行，不在单纯关闭时执行
     if: github.event.pull_request.merged == true
 
     steps:
@@ -71,7 +70,7 @@ jobs:
             } catch (error) {
               console.error(`Failed to delete branch ${branch}:`, error.message);
 
-              // 不要尝试添加评论，只记录错误
+              // 详细的错误处理，但不添加PR评论
               if (error.status === 403) {
                 console.error(`❌ Insufficient permissions to delete branch ${branch}`);
               } else if (error.status === 422) {
