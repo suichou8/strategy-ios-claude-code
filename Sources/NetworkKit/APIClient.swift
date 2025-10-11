@@ -1,18 +1,23 @@
 import Foundation
+import SecurityKit
 
 // MARK: - API客户端
-actor APIClient {
-    static let shared = APIClient()
+public actor APIClient {
+    public static let shared = APIClient()
 
-    private let baseURL = "https://strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app"
+    private let baseURL: String
     private let session: URLSession
     private let keychainKey = "com.strategy.ios.token"
 
-    init(session: URLSession = .shared) {
+    public init(
+        baseURL: String = "https://strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app",
+        session: URLSession = .shared
+    ) {
+        self.baseURL = baseURL
         self.session = session
     }
 
-    func request<T: Decodable>(
+    public func request<T: Decodable>(
         _ endpoint: APIEndpoint,
         responseType: T.Type = T.self
     ) async throws -> T {

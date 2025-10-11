@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - HTTP方法
-enum HTTPMethod: String {
+public enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
     case put = "PUT"
@@ -9,38 +9,38 @@ enum HTTPMethod: String {
 }
 
 // MARK: - API端点
-enum APIEndpoint {
+public enum APIEndpoint {
     case comprehensive(symbol: String)
 
-    var path: String {
+    public var path: String {
         switch self {
         case .comprehensive(let symbol):
             return "/api/v1/stocks/\(symbol)/comprehensive"
         }
     }
 
-    var method: HTTPMethod {
+    public var method: HTTPMethod {
         switch self {
         case .comprehensive:
             return .get
         }
     }
 
-    var requiresAuth: Bool {
+    public var requiresAuth: Bool {
         switch self {
         case .comprehensive:
             return true
         }
     }
 
-    var bypassCache: Bool {
+    public var bypassCache: Bool {
         switch self {
         case .comprehensive:
             return true
         }
     }
 
-    func url(baseURL: String) -> URL {
+    public func url(baseURL: String) -> URL {
         guard var urlComponents = URLComponents(string: baseURL + path) else {
             fatalError("Invalid URL components")
         }

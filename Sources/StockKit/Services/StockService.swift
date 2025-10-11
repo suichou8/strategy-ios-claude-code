@@ -1,23 +1,24 @@
 import Foundation
 import Observation
+import NetworkKit
 
 // MARK: - 股票数据服务
 @Observable
-class StockService {
-    var comprehensiveData: ComprehensiveStockData?
-    var isLoading = false
-    var error: Error?
+public class StockService {
+    public var comprehensiveData: ComprehensiveStockData?
+    public var isLoading = false
+    public var error: Error?
 
     private let apiClient: APIClient
 
-    init(apiClient: APIClient = .shared) {
+    public init(apiClient: APIClient = .shared) {
         self.apiClient = apiClient
     }
 
     /// 获取综合股票数据（实时 + K线 + 分时）
     /// - Parameter symbol: 股票代码（例如：CONL）
     /// - Returns: 综合股票数据
-    func fetchComprehensiveData(symbol: String) async throws -> ComprehensiveStockData {
+    public func fetchComprehensiveData(symbol: String) async throws -> ComprehensiveStockData {
         isLoading = true
         defer { isLoading = false }
 
@@ -48,12 +49,12 @@ class StockService {
     }
 
     /// 清除错误状态
-    func clearError() {
+    public func clearError() {
         error = nil
     }
 
     /// 清除综合数据
-    func clearComprehensiveData() {
+    public func clearComprehensiveData() {
         comprehensiveData = nil
     }
 }

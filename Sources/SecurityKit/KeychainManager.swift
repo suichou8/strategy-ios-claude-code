@@ -2,12 +2,12 @@ import Foundation
 import Security
 
 // MARK: - Keychain管理器
-class KeychainManager {
-    static let shared = KeychainManager()
+public class KeychainManager {
+    public static let shared = KeychainManager()
 
     private init() {}
 
-    func save(_ value: String, forKey key: String) throws {
+    public func save(_ value: String, forKey key: String) throws {
         guard let data = value.data(using: .utf8) else {
             throw KeychainError.encodingError
         }
@@ -28,7 +28,7 @@ class KeychainManager {
         }
     }
 
-    func load(forKey key: String) throws -> String {
+    public func load(forKey key: String) throws -> String {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key,
@@ -51,7 +51,7 @@ class KeychainManager {
         return value
     }
 
-    func delete(forKey key: String) {
+    public func delete(forKey key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: key
@@ -62,13 +62,13 @@ class KeychainManager {
 }
 
 // MARK: - Keychain错误
-enum KeychainError: Error, LocalizedError {
+public enum KeychainError: Error, LocalizedError {
     case encodingError
     case saveFailed(OSStatus)
     case loadFailed(OSStatus)
     case decodingError
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .encodingError:
             return "编码失败"

@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - 网络错误
-enum NetworkError: Error, LocalizedError {
+public enum NetworkError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
     case unauthorized
@@ -12,7 +12,7 @@ enum NetworkError: Error, LocalizedError {
     case noData
     case unknown(Error)
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidURL:
             return "无效的URL"

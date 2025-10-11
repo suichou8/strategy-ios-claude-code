@@ -32,3 +32,14 @@ lerna-debug.log*
 
 # OS
 Thumbs.db
+
+# Swift Package Manager
+.build/
+.swiftpm/
+*.xcodeproj/
+Package.resolved
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
