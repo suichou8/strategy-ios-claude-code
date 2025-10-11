@@ -54,8 +54,7 @@ strategy-ios-claude-code/
 │   ├── NetworkKitTests/
 │   └── StockKitTests/
 ├── CLAUDE.md                     # 完整开发指南
-├── CREATE_IOS_APP.md            # 创建 iOS App 详细指南
-└── HOW_TO_RUN.md                # 运行和调试指南
+└── SPM_README.md                # SPM 详细文档
 ```
 
 ## 模块化架构
@@ -196,11 +195,9 @@ GET /api/v1/stocks/{symbol}/comprehensive
 
 ## 文档
 
-- **[App/README.md](App/README.md)** - App 创建指南
-- **[CREATE_IOS_APP.md](CREATE_IOS_APP.md)** - 详细创建步骤
-- **[CLAUDE.md](CLAUDE.md)** - 完整开发指南
-- **[HOW_TO_RUN.md](HOW_TO_RUN.md)** - 运行和调试指南
-- **[SPM_README.md](SPM_README.md)** - SPM 详细文档
+- **[App/README.md](App/README.md)** - 🎯 App 创建和运行指南（必读）
+- **[CLAUDE.md](CLAUDE.md)** - 完整开发指南和架构设计
+- **[SPM_README.md](SPM_README.md)** - SPM 模块详细文档
 
 ## 技术栈
 
