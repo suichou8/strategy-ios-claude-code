@@ -6,8 +6,7 @@ import PackageDescription
 let package = Package(
     name: "StrategyiOS",
     platforms: [
-        .iOS(.v17),
-        .macOS(.v14)
+        .iOS(.v17)
     ],
     products: [
         // App功能模块 - SwiftUI Views
