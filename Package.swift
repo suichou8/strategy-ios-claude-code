@@ -10,11 +10,6 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        // iOS App
-        .executable(
-            name: "StrategyiOSApp",
-            targets: ["StrategyiOSApp"]
-        ),
         // 安全模块 - Keychain管理
         .library(
             name: "SecurityKit",
@@ -46,20 +41,6 @@ let package = Package(
         // .package(url: "https://github.com/globulus/swiftui-pull-to-refresh.git", from: "1.0.0")
     ],
     targets: [
-        // MARK: - iOS App
-        .executableTarget(
-            name: "StrategyiOSApp",
-            dependencies: [
-                "StockKit",
-                "NetworkKit",
-                "SecurityKit"
-            ],
-            path: "Sources/StrategyiOSApp",
-            resources: [
-                .process("Assets.xcassets")
-            ]
-        ),
-
         // MARK: - SecurityKit
         .target(
             name: "SecurityKit",
