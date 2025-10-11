@@ -1,11 +1,13 @@
 import SwiftUI
 import StockKit
 
-struct ContentView: View {
+public struct ContentView: View {
     @Environment(StockService.self) var stockService
     @State private var showError = false
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 if stockService.isLoading {
@@ -61,10 +63,14 @@ struct ContentView: View {
     }
 }
 
-struct StockDataView: View {
+public struct StockDataView: View {
     let data: ComprehensiveStockData
 
-    var body: some View {
+    public init(data: ComprehensiveStockData) {
+        self.data = data
+    }
+
+    public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // 实时行情

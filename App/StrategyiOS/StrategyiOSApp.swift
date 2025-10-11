@@ -1,4 +1,5 @@
 import SwiftUI
+import AppFeature
 import StockKit
 
 @main

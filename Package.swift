@@ -10,6 +10,11 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
+        // App功能模块 - SwiftUI Views
+        .library(
+            name: "AppFeature",
+            targets: ["AppFeature"]
+        ),
         // 安全模块 - Keychain管理
         .library(
             name: "SecurityKit",
@@ -41,6 +46,17 @@ let package = Package(
         // .package(url: "https://github.com/globulus/swiftui-pull-to-refresh.git", from: "1.0.0")
     ],
     targets: [
+        // MARK: - AppFeature
+        .target(
+            name: "AppFeature",
+            dependencies: [
+                "StockKit"
+            ],
+            resources: [
+                .process("Assets.xcassets")
+            ]
+        ),
+
         // MARK: - SecurityKit
         .target(
             name: "SecurityKit",
