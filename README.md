@@ -1,10 +1,10 @@
 # Strategy iOS - 股票策略应用
 
-iOS 股票数据分析应用，使用 Swift Package Manager 进行模块化管理。
+iOS 股票数据分析应用，采用 **Point-Free 风格**的模块化架构。
 
 ## 项目概览
 
-- **项目类型**: iOS 股票数据分析应用
+- **架构风格**: Point-Free isowords 模式（SPM + Xcode）
 - **最低系统版本**: iOS 17.0+
 - **开发语言**: Swift 5.9+
 - **UI框架**: SwiftUI (纯 SwiftUI 开发)
@@ -24,129 +24,164 @@ iOS 股票数据分析应用，使用 Swift Package Manager 进行模块化管�
 - 使用Keychain安全存储Token
 - 完整的错误处理
 
-## 模块化架构
-
-项目采用 Swift Package Manager 进行模块化管理，分为三个独立模块：
-
-### 1. SecurityKit
-**职责**: 安全相关功能
-- Keychain管理器
-- Token安全存储
-
-### 2. NetworkKit
-**职责**: 网络层基础设施
-- API客户端 (Actor并发安全)
-- API端点定义
-- 网络错误处理
-- **依赖**: SecurityKit
-
-### 3. StockKit
-**职责**: 股票业务逻辑
-- 综合股票数据模型
-- 股票服务 (@Observable)
-- **依赖**: NetworkKit, SecurityKit
-
 ## 项目结构
 
 ```
 strategy-ios-claude-code/
-├── Package.swift                 # SPM 包定义
-├── Sources/
-│   ├── SecurityKit/              # 安全模块
-│   │   └── KeychainManager.swift
+├── Package.swift                 # 📦 SPM 包定义（所有模块）
+├── Sources/                      # 🔧 所有业务逻辑和UI模块
+│   ├── AppFeature/               # ⭐ App UI和视图逻辑
+│   │   ├── ContentView.swift
+│   │   └── Assets.xcassets/
+│   ├── StockKit/                 # 股票业务模块
+│   │   ├── Models/
+│   │   └── Services/
 │   ├── NetworkKit/               # 网络层模块
-│   │   ├── NetworkError.swift
+│   │   ├── APIClient.swift
 │   │   ├── APIEndpoint.swift
-│   │   └── APIClient.swift
-│   └── StockKit/                 # 股票业务模块
-│       ├── Models/
-│       │   └── ComprehensiveStockData.swift
-│       └── Services/
-│           └── StockService.swift
+│   │   └── NetworkError.swift
+│   └── SecurityKit/              # 安全层模块
+│       └── KeychainManager.swift
+├── App/                          # 🎯 Xcode 项目和最小化启动代码
+│   ├── StrategyiOS/
+│   │   ├── StrategyiOSApp.swift  # @main 入口（最小化）
+│   │   ├── Assets.xcassets/
+│   │   └── Info.plist
+│   ├── StrategyiOS.xcodeproj/    # （需要在 Xcode 中创建）
+│   └── README.md                 # App 创建指南
 ├── Tests/                        # 测试目录
 │   ├── SecurityKitTests/
 │   ├── NetworkKitTests/
 │   └── StockKitTests/
 ├── CLAUDE.md                     # 完整开发指南
-└── SPM_README.md                 # SPM详细使用文档
+├── CREATE_IOS_APP.md            # 创建 iOS App 详细指南
+└── HOW_TO_RUN.md                # 运行和调试指南
 ```
+
+## 模块化架构
+
+### 1. AppFeature 模块
+**职责**: SwiftUI 视图和 UI 逻辑
+- 所有视图组件
+- UI 状态管理
+- 公开接口供 App 使用
+
+### 2. StockKit 模块
+**职责**: 股票业务逻辑
+- 综合股票数据模型
+- 股票服务 (@Observable)
+- **依赖**: NetworkKit, SecurityKit
+
+### 3. NetworkKit 模块
+**职责**: 网络层基础设施
+- API 客户端 (Actor并发安全)
+- API 端点定义
+- 网络错误处理
+- **依赖**: SecurityKit
+
+### 4. SecurityKit 模块
+**职责**: 安全相关功能
+- Keychain 管理器
+- Token 安全存储
+- **依赖**: 无
 
 ## 快速开始
 
-### 前置要求
-
-- Xcode 15.0+
-- iOS 17.0+ 或 macOS 14.0+
-- Swift 5.9+
-
-### 在 Xcode 中打开
+### 1. 在 Xcode 中创建项目
 
 ```bash
-# 克隆仓库
-git clone [repository-url]
-cd strategy-ios-claude-code
+# 进入 App 目录
+cd App
 
-# 切换到功能分支
-git checkout feature/fetch-data-conl
-
-# 直接用 Xcode 打开
-open Package.swift
+# 在 Xcode 中创建新项目
+# File -> New -> Project -> iOS -> App
+# Product Name: StrategyiOS
+# 保存到当前 App 目录（选择 Merge）
 ```
 
-### 命令行构建
+详细步骤请查看：[App/README.md](App/README.md)
+
+### 2. 添加 SPM 依赖
+
+在 Xcode 中：
+1. 项目设置 -> Package Dependencies
+2. Add Local... -> 选择项目根目录
+3. 添加 **AppFeature** 包
+
+### 3. 运行
 
 ```bash
-# 构建项目
-swift build
+# 打开 Xcode 项目
+open App/StrategyiOS.xcodeproj
 
-# 运行测试
-swift test
-
-# 清理构建
-swift package clean
+# 或者在 Xcode 中
+# 1. 选择 StrategyiOS scheme
+# 2. 选择模拟器
+# 3. ⌘R 运行
 ```
 
 ## 使用示例
 
-### 基础用法
+### App 入口（最小化）
 
 ```swift
+// App/StrategyiOS/StrategyiOSApp.swift
 import SwiftUI
-import StockKit
+import AppFeature    // SPM 模块
+import StockKit      // SPM 模块
 
 @main
-struct MyApp: App {
+struct StrategyiOSApp: App {
     @State private var stockService = StockService()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView()        // 来自 AppFeature 模块
                 .environment(stockService)
         }
     }
 }
+```
 
-struct ContentView: View {
+### UI 视图（在 AppFeature 模块中）
+
+```swift
+// Sources/AppFeature/ContentView.swift
+import SwiftUI
+import StockKit
+
+public struct ContentView: View {
     @Environment(StockService.self) var stockService
 
-    var body: some View {
-        VStack {
-            if stockService.isLoading {
-                ProgressView("加载中...")
-            } else if let data = stockService.comprehensiveData {
-                // 显示股票数据
-                if let realtime = data.realtime {
-                    Text("\(realtime.name)")
-                    Text("¥\(realtime.currentPrice, specifier: "%.2f")")
-                }
-            }
-        }
-        .task {
-            try? await stockService.fetchComprehensiveData(symbol: "CONL")
-        }
+    public var body: some View {
+        // 所有 UI 逻辑...
     }
 }
 ```
+
+## 依赖关系
+
+```
+App (StrategyiOS.xcodeproj)
+  ↓ 依赖
+AppFeature (SPM 模块)
+  ↓ 依赖
+StockKit
+  ↓ 依赖
+NetworkKit
+  ↓ 依赖
+SecurityKit
+```
+
+## 架构优势
+
+✅ **Point-Free 业界最佳实践**
+✅ **高度模块化**（86个模块的 isowords 模式）
+✅ **标准 iOS 开发方式**（有 .xcodeproj）
+✅ **所有代码在 SPM 模块中**（易于测试）
+✅ **App 代码最小化**（只有启动入口）
+✅ **支持 SwiftUI Previews**
+✅ **易于添加更多 targets**（Widget、Watch App等）
 
 ## API 配置
 
@@ -161,8 +196,11 @@ GET /api/v1/stocks/{symbol}/comprehensive
 
 ## 文档
 
-- **[CLAUDE.md](./CLAUDE.md)** - 完整的开发指南和架构设计
-- **[SPM_README.md](./SPM_README.md)** - SPM详细使用文档和集成指南
+- **[App/README.md](App/README.md)** - App 创建指南
+- **[CREATE_IOS_APP.md](CREATE_IOS_APP.md)** - 详细创建步骤
+- **[CLAUDE.md](CLAUDE.md)** - 完整开发指南
+- **[HOW_TO_RUN.md](HOW_TO_RUN.md)** - 运行和调试指南
+- **[SPM_README.md](SPM_README.md)** - SPM 详细文档
 
 ## 技术栈
 
@@ -172,6 +210,7 @@ GET /api/v1/stocks/{symbol}/comprehensive
 - **并发**: Actor + async/await
 - **安全**: Keychain Services
 - **包管理**: Swift Package Manager
+- **架构**: Point-Free isowords 模式
 
 ## 开发规范
 
@@ -180,6 +219,7 @@ GET /api/v1/stocks/{symbol}/comprehensive
 - 使用 async/await 进行异步编程
 - 公共接口必须标记为 public
 - 使用 `// MARK: -` 进行代码分组
+- 所有业务逻辑在 SPM 模块中
 
 ## Git 提交
 
@@ -191,6 +231,8 @@ git branch
 git log --oneline
 
 # 最近的提交
+# c769fcd refactor: 重构为Point-Free风格的SPM + Xcode项目结构
+# 5bc4947 refactor: 移除executable target，改为标准iOS App项目结构
 # 7e12efe refactor: 使用SPM进行模块化管理
 # 7837ea0 feat: 实现CONL综合股票数据获取功能
 ```
@@ -203,6 +245,14 @@ git log --oneline
 - [ ] 实现图表展示
 - [ ] 添加更多API端点
 - [ ] 配置 CI/CD (GitHub Actions)
+- [ ] 添加 Widget target
+- [ ] 添加 Watch App target
+
+## 参考
+
+本项目参考了以下优秀开源项目：
+- [Point-Free isowords](https://github.com/pointfreeco/isowords) - Point-Free 的开源游戏
+- [Swift Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture)
 
 ## 贡献
 
@@ -214,4 +264,6 @@ MIT
 
 ---
 
-**注意**: 本项目仍在开发中，当前分支为功能分支。
+**注意**: 当前为功能开发分支 `feature/fetch-data-conl`
+
+*采用 Point-Free 业界最佳实践*
