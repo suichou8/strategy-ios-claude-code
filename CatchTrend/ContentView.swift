@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  catch-trend
+//  CatchTrend
 //
 //  Created by shuai zhang on 2025/10/12.
 //
