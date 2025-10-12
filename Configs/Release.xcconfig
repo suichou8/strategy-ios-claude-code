@@ -1,0 +1,56 @@
+//
+//  Release.xcconfig
+//  CatchTrend
+//
+//  Created by shuai zhang on 2025/10/12.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+#include "Base.xcconfig"
+
+// MARK: - Release Configuration
+
+// MARK: - Product Settings
+
+// Release 环境使用正式的 Bundle ID
+PRODUCT_BUNDLE_IDENTIFIER = com.sunshinenew07.CatchTrend
+
+// MARK: - Build Settings
+
+COPY_PHASE_STRIP = NO
+VALIDATE_PRODUCT = YES
+
+// MARK: - Swift Optimization
+
+SWIFT_OPTIMIZATION_LEVEL = -O
+SWIFT_COMPILATION_MODE = wholemodule
+SWIFT_EMIT_LOC_STRINGS = YES
+
+// MARK: - Compiler Optimization
+
+// 默认优化级别（可以根据需要调整）
+// GCC_OPTIMIZATION_LEVEL = s  // 优化代码大小
+// GCC_OPTIMIZATION_LEVEL = 3  // 最大优化速度
+// 不设置则使用默认值
+
+// MARK: - Debugging
+
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ENABLE_NS_ASSERTIONS = NO
+
+// MARK: - Metal
+
+MTL_ENABLE_DEBUG_INFO = NO
+
+// MARK: - Code Stripping
+
+STRIP_INSTALLED_PRODUCT = YES
+DEAD_CODE_STRIPPING = YES
+
+// MARK: - API Environment (可以根据需要添加自定义环境变量)
+
+// API_BASE_URL = https://api.catchtrend.com
+// ENABLE_LOGGING = NO
+// NETWORK_TIMEOUT = 60

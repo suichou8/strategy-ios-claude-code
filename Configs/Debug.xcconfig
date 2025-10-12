@@ -1,0 +1,54 @@
+//
+//  Debug.xcconfig
+//  CatchTrend
+//
+//  Created by shuai zhang on 2025/10/12.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+#include "Base.xcconfig"
+
+// MARK: - Debug Configuration
+
+// MARK: - Product Settings
+
+// Debug 环境使用 .debug 后缀，可以与 Release 版本共存
+PRODUCT_BUNDLE_IDENTIFIER = com.sunshinenew07.CatchTrend.debug
+
+// MARK: - Build Settings
+
+ONLY_ACTIVE_ARCH = YES
+COPY_PHASE_STRIP = NO
+
+// MARK: - Swift Optimization
+
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG $(inherited)
+SWIFT_EMIT_LOC_STRINGS = YES
+
+// MARK: - Compiler Optimization
+
+GCC_OPTIMIZATION_LEVEL = 0
+GCC_DYNAMIC_NO_PIC = NO
+
+// MARK: - Debugging
+
+DEBUG_INFORMATION_FORMAT = dwarf
+ENABLE_TESTABILITY = YES
+ENABLE_NS_ASSERTIONS = YES
+
+// MARK: - Preprocessor
+
+GCC_PREPROCESSOR_DEFINITIONS = DEBUG=1 $(inherited)
+
+// MARK: - Metal
+
+MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE
+
+// MARK: - API Environment (可以根据需要添加自定义环境变量)
+
+// API_BASE_URL = https://dev-api.catchtrend.com
+// ENABLE_LOGGING = YES
+// NETWORK_TIMEOUT = 30
