@@ -32,15 +32,15 @@ struct ContentView: View {
 #Preview("已登录状态") {
     let authManager = AuthManager.shared
     // 模拟已登录状态（仅用于预览）
-    return ContentView(
+    ContentView(
         authManager: authManager,
-        apiClient: .shared
+        apiClient: APIClient(authManager: authManager)
     )
 }
 
 #Preview("未登录状态") {
     ContentView(
         authManager: .shared,
-        apiClient: .shared
+        apiClient: APIClient(authManager: .shared)
     )
 }

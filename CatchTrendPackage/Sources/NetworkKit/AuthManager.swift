@@ -11,6 +11,7 @@ import Observation
 
 /// JWT 认证管理器
 @Observable
+@MainActor
 public final class AuthManager {
     /// 单例
     public static let shared = AuthManager()

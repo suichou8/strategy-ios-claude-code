@@ -9,9 +9,6 @@ import Foundation
 
 /// API 客户端
 public actor APIClient {
-    /// 单例
-    public static let shared = APIClient()
-
     /// Base URL
     private let baseURL: String
 
@@ -25,11 +22,11 @@ public actor APIClient {
     /// - Parameters:
     ///   - baseURL: API Base URL，默认从 Bundle 读取
     ///   - session: URLSession，默认使用 .shared
-    ///   - authManager: 认证管理器，默认使用 .shared
+    ///   - authManager: 认证管理器
     public init(
         baseURL: String? = nil,
         session: URLSession = .shared,
-        authManager: AuthManager = .shared
+        authManager: AuthManager
     ) {
         // 从 Bundle 读取 API_BASE_URL，如果没有则使用传入的 baseURL
         if let bundleBaseURL = Bundle.main.infoDictionary?["API_BASE_URL"] as? String {
@@ -66,7 +63,10 @@ public actor APIClient {
 
         // 3. 添加认证 Token（如果需要）
         if endpoint.requiresAuth {
-            guard let token = authManager.getAccessToken() else {
+            let token = await MainActor.run {
+                authManager.getAccessToken()
+            }
+            guard let token = token else {
                 throw NetworkError.unauthorized
             }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -147,7 +147,10 @@ extension APIClient {
 
         // 登录成功后保存 Token
         if response.success {
-            try authManager.saveAuth(token: response.accessToken, username: username)
+            let token = response.accessToken
+            try await MainActor.run {
+                try authManager.saveAuth(token: token, username: username)
+            }
         }
 
         return response
@@ -172,7 +175,7 @@ extension APIClient {
 // MARK: - Response Models
 
 /// 登录响应
-public struct LoginResponse: Decodable {
+public struct LoginResponse: Decodable, Sendable {
     public let success: Bool
     public let message: String
     public let accessToken: String

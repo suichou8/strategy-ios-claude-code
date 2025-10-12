@@ -173,6 +173,6 @@ public struct LoginView: View {
 #Preview {
     LoginView(
         authManager: .shared,
-        apiClient: .shared
+        apiClient: APIClient(authManager: .shared)
     )
 }
