@@ -8,7 +8,7 @@
 import Foundation
 
 /// K 线数据项
-public struct KLineItem: Codable, Identifiable, Equatable {
+public struct KLineItem: Codable, Identifiable, Equatable, Sendable {
     public let id = UUID()
 
     /// 时间
@@ -89,7 +89,7 @@ public struct KLineItem: Codable, Identifiable, Equatable {
 }
 
 /// K 线数据
-public struct KLineData: Codable, Equatable {
+public struct KLineData: Codable, Equatable, Sendable {
     /// 股票代码
     public let symbol: String
 
@@ -121,7 +121,7 @@ public struct KLineData: Codable, Equatable {
 }
 
 /// K 线响应
-public struct KLineResponse: Codable {
+public struct KLineResponse: Codable, Sendable {
     public let success: Bool
     public let message: String
     public let timestamp: String

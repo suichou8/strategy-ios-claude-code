@@ -8,7 +8,7 @@
 import Foundation
 
 /// 分时数据项
-public struct MinuteItem: Codable, Identifiable, Equatable {
+public struct MinuteItem: Codable, Identifiable, Equatable, Sendable {
     public let id = UUID()
 
     /// 时间
@@ -46,7 +46,7 @@ public struct MinuteItem: Codable, Identifiable, Equatable {
 }
 
 /// 分时数据
-public struct MinuteData: Codable, Equatable {
+public struct MinuteData: Codable, Equatable, Sendable {
     /// 股票代码
     public let symbol: String
 
@@ -78,7 +78,7 @@ public struct MinuteData: Codable, Equatable {
 }
 
 /// 分时响应
-public struct MinuteResponse: Codable {
+public struct MinuteResponse: Codable, Sendable {
     public let success: Bool
     public let message: String
     public let timestamp: String

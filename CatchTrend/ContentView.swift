@@ -18,7 +18,10 @@ struct ContentView: View {
         // AuthManager 使用 @Observable，状态变化会自动触发视图更新
         if authManager.isAuthenticated {
             // 已登录 - 显示主页
-            HomeView(authManager: authManager)
+            HomeView(
+                authManager: authManager,
+                apiClient: apiClient
+            )
         } else {
             // 未登录 - 显示登录页
             LoginView(
