@@ -60,6 +60,10 @@ public final class LoginViewModel {
         errorMessage = nil
         showError = false
 
+        #if DEBUG
+        print("🔐 开始登录: username=\(username)")
+        #endif
+
         do {
             let response = try await apiClient.login(
                 username: username,
@@ -73,13 +77,22 @@ public final class LoginViewModel {
                 logSuccess(response: response)
             } else {
                 // 登录失败（服务端返回失败）
+                #if DEBUG
+                print("❌ 登录失败: \(response.message)")
+                #endif
                 handleLoginFailure(message: response.message)
             }
         } catch let error as NetworkError {
             isLoading = false
+            #if DEBUG
+            print("❌ 网络错误: \(error.localizedDescription)")
+            #endif
             handleNetworkError(error)
         } catch {
             isLoading = false
+            #if DEBUG
+            print("❌ 未知错误: \(error.localizedDescription)")
+            #endif
             handleUnknownError(error)
         }
     }

@@ -28,18 +28,20 @@ public actor APIClient {
         session: URLSession = .shared,
         authManager: AuthManager
     ) {
-        // 从 Bundle 读取 API_BASE_URL，如果没有则使用传入的 baseURL
-        if let bundleBaseURL = Bundle.main.infoDictionary?["API_BASE_URL"] as? String {
-            self.baseURL = bundleBaseURL
-        } else if let baseURL = baseURL {
+        // 优先使用传入的 baseURL，否则使用配置
+        if let baseURL = baseURL {
             self.baseURL = baseURL
         } else {
-            // 默认 URL（不应该走到这里，应该在 xcconfig 中配置）
-            self.baseURL = "https://strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app"
+            // 使用 APIConfig 中的配置
+            self.baseURL = APIConfig.baseURL
         }
 
         self.session = session
         self.authManager = authManager
+
+        if APIConfig.enableLogging {
+            print("🔧 APIClient 初始化: baseURL=\(self.baseURL)")
+        }
     }
 
     /// 发起请求
@@ -53,7 +55,14 @@ public actor APIClient {
     ) async throws -> T {
         // 1. 构建 URL
         guard let url = buildURL(for: endpoint) else {
+            if APIConfig.enableLogging {
+                print("❌ 无效的 URL: baseURL=\(baseURL), path=\(endpoint.path)")
+            }
             throw NetworkError.invalidURL
+        }
+
+        if APIConfig.enableLogging {
+            print("🌐 API 请求: \(endpoint.method.rawValue) \(url.absoluteString)")
         }
 
         // 2. 构建 URLRequest
@@ -90,17 +99,36 @@ public actor APIClient {
         }
 
         // 7. 处理 HTTP 状态码
+        if APIConfig.enableLogging {
+            print("📡 HTTP 响应: \(httpResponse.statusCode)")
+        }
+
         switch httpResponse.statusCode {
         case 200...299:
             // 成功，继续解码
             break
         case 401:
+            if APIConfig.enableLogging {
+                print("❌ HTTP 401: 未授权")
+            }
             throw NetworkError.unauthorized
         case 429:
+            if APIConfig.enableLogging {
+                print("❌ HTTP 429: 请求过于频繁")
+            }
             throw NetworkError.rateLimited
         case 500...599:
+            if APIConfig.enableLogging {
+                print("❌ HTTP \(httpResponse.statusCode): 服务器错误")
+            }
             throw NetworkError.serverError(statusCode: httpResponse.statusCode)
         default:
+            if APIConfig.enableLogging {
+                print("❌ HTTP \(httpResponse.statusCode): HTTP 错误")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("响应内容: \(responseString)")
+                }
+            }
             throw NetworkError.httpError(statusCode: httpResponse.statusCode)
         }
 
