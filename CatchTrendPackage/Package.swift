@@ -36,9 +36,11 @@ let package = Package(
             name: "NetworkKit",
             dependencies: []
         ),
-        .testTarget(
-            name: "NetworkKitTests",
-            dependencies: ["NetworkKit"]
-        ),
+        // NetworkKit tests will be added in Phase 2 (when API is stable)
+        // See Todos/TESTING_STRATEGY.md for details
+        // .testTarget(
+        //     name: "NetworkKitTests",
+        //     dependencies: ["NetworkKit"]
+        // ),
     ]
 )
