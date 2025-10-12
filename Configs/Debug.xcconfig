@@ -50,7 +50,7 @@ MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE
 // MARK: - API Environment
 
 // API Base URL (Debug 环境使用线上接口)
-API_BASE_URL = https:/$()/strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app
+API_BASE_URL = https://strategy-claude-code.vercel.app/
 
 // 可选的调试配置
 // ENABLE_LOGGING = YES

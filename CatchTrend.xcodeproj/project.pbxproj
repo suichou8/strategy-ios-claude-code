@@ -10,6 +10,7 @@
 		1C1397862E9B394C00D92357 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 1C1397852E9B394C00D92357 /* Debug.xcconfig */; };
 		1C1397882E9B398500D92357 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 1C1397872E9B398500D92357 /* Release.xcconfig */; };
 		1C13978A2E9B3D9300D92357 /* Base.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 1C1397892E9B3D9300D92357 /* Base.xcconfig */; };
+		1C7858DC2E9B84A000A80631 /* CatchTrendPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 1C7858DB2E9B84A000A80631 /* CatchTrendPackage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,6 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C7858DC2E9B84A000A80631 /* CatchTrendPackage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +49,7 @@
 				1C1397872E9B398500D92357 /* Release.xcconfig */,
 				1C2B13EF2E9ADEB200187CF2 /* CatchTrendPackage */,
 				1C2B13D22E9ADB8100187CF2 /* CatchTrend */,
+				1C7858DA2E9B84A000A80631 /* Frameworks */,
 				1C2B13D12E9ADB8100187CF2 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,6 +60,13 @@
 				1C2B13D02E9ADB8100187CF2 /* CatchTrend.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		1C7858DA2E9B84A000A80631 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -79,6 +89,7 @@
 			);
 			name = CatchTrend;
 			packageProductDependencies = (
+				1C7858DB2E9B84A000A80631 /* CatchTrendPackage */,
 			);
 			productName = CatchTrend;
 			productReference = 1C2B13D02E9ADB8100187CF2 /* CatchTrend.app */;
@@ -295,7 +306,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -328,7 +339,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -355,6 +366,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1C7858DB2E9B84A000A80631 /* CatchTrendPackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CatchTrendPackage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1C2B13C82E9ADB8100187CF2 /* Project object */;
 }

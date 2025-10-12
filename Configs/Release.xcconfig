@@ -52,7 +52,7 @@ DEAD_CODE_STRIPPING = YES
 // MARK: - API Environment
 
 // API Base URL (Release 环境使用线上接口)
-API_BASE_URL = https:/$()/strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app
+API_BASE_URL = https://strategy-claude-code.vercel.app/
 
 // 可选的生产配置
 // ENABLE_LOGGING = NO
