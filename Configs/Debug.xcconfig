@@ -47,8 +47,11 @@ GCC_PREPROCESSOR_DEFINITIONS = DEBUG=1 $(inherited)
 
 MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE
 
-// MARK: - API Environment (可以根据需要添加自定义环境变量)
+// MARK: - API Environment
 
-// API_BASE_URL = https://dev-api.catchtrend.com
+// API Base URL (Debug 环境使用线上接口)
+API_BASE_URL = https:/$()/strategy-claude-code-37cf1ytmd-suichou8s-projects.vercel.app
+
+// 可选的调试配置
 // ENABLE_LOGGING = YES
 // NETWORK_TIMEOUT = 30
