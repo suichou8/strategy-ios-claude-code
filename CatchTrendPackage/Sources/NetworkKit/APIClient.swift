@@ -187,15 +187,3 @@ public struct LoginResponse: Decodable {
         self.expiresIn = expiresIn
     }
 }
-
-/// 综合数据响应（临时定义，后续会详细实现）
-public struct ComprehensiveResponse: Decodable {
-    public let success: Bool
-    public let message: String
-    // TODO: 添加 comprehensive_data 字段
-
-    public init(success: Bool, message: String) {
-        self.success = success
-        self.message = message
-    }
-}
