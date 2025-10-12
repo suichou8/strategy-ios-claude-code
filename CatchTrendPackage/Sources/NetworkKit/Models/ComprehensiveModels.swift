@@ -8,7 +8,7 @@
 import Foundation
 
 /// 综合股票数据
-public struct ComprehensiveData: Codable, Equatable {
+public struct ComprehensiveData: Codable, Equatable, Sendable {
     /// 股票代码
     public let symbol: String
 
@@ -50,7 +50,7 @@ public struct ComprehensiveData: Codable, Equatable {
 }
 
 /// 综合数据响应（完整版本）
-public struct ComprehensiveResponse: Codable {
+public struct ComprehensiveResponse: Codable, Sendable {
     /// 请求是否成功
     public let success: Bool
 

@@ -8,6 +8,7 @@
 import Foundation
 import Observation
 import NetworkKit
+import Shared
 
 /// 登录视图模型
 /// 负责处理登录业务逻辑和状态管理
@@ -35,6 +36,7 @@ public final class LoginViewModel {
 
     private let authManager: AuthManager
     private let apiClient: APIClient
+    private let logger = Logger.Category.auth
 
     // MARK: - Initialization
 
@@ -60,9 +62,7 @@ public final class LoginViewModel {
         errorMessage = nil
         showError = false
 
-        #if DEBUG
-        print("🔐 开始登录: username=\(username)")
-        #endif
+        logger.info("开始登录: username=\(username)")
 
         do {
             let response = try await apiClient.login(
@@ -77,22 +77,16 @@ public final class LoginViewModel {
                 logSuccess(response: response)
             } else {
                 // 登录失败（服务端返回失败）
-                #if DEBUG
-                print("❌ 登录失败: \(response.message)")
-                #endif
+                logger.error("登录失败: \(response.message)")
                 handleLoginFailure(message: response.message)
             }
         } catch let error as NetworkError {
             isLoading = false
-            #if DEBUG
-            print("❌ 网络错误: \(error.localizedDescription)")
-            #endif
+            logger.error("网络错误", error: error)
             handleNetworkError(error)
         } catch {
             isLoading = false
-            #if DEBUG
-            print("❌ 未知错误: \(error.localizedDescription)")
-            #endif
+            logger.error("未知错误", error: error)
             handleUnknownError(error)
         }
     }
@@ -106,10 +100,10 @@ public final class LoginViewModel {
     // MARK: - Private Helpers
 
     private func logSuccess(response: LoginResponse) {
-        print("✅ 登录成功: \(response.message)")
-        print("✅ Token: \(response.accessToken.prefix(20))...")
-        print("✅ isAuthenticated: \(authManager.isAuthenticated)")
-        print("✅ currentUsername: \(authManager.currentUsername ?? "nil")")
+        logger.info("登录成功: \(response.message)")
+        logger.debug("Token: \(response.accessToken.prefix(20))...")
+        logger.debug("isAuthenticated: \(authManager.isAuthenticated)")
+        logger.debug("currentUsername: \(authManager.currentUsername ?? "nil")")
     }
 
     private func handleLoginFailure(message: String) {

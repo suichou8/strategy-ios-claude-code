@@ -40,7 +40,9 @@ extension APIEndpoint {
         switch self {
         case .login:
             return .post
-        case .comprehensive, .kline, .minute, .realtime:
+        case .comprehensive:
+            return .get
+        case .kline, .minute, .realtime:
             return .post
         }
     }

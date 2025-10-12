@@ -18,23 +18,37 @@ let package = Package(
             name: "NetworkKit",
             targets: ["NetworkKit"]
         ),
+        .library(
+            name: "Shared",
+            targets: ["Shared"]
+        ),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "CatchTrendPackage",
-            dependencies: ["NetworkKit"]
+            dependencies: ["NetworkKit", "Shared"]
         ),
         .testTarget(
             name: "CatchTrendPackageTests",
             dependencies: ["CatchTrendPackage"]
         ),
 
+        // MARK: - Shared
+        .target(
+            name: "Shared",
+            dependencies: []
+        ),
+        .testTarget(
+            name: "SharedTests",
+            dependencies: ["Shared"]
+        ),
+
         // MARK: - NetworkKit
         .target(
             name: "NetworkKit",
-            dependencies: []
+            dependencies: ["Shared"]
         ),
         // NetworkKit tests will be added in Phase 2 (when API is stable)
         // See Todos/TESTING_STRATEGY.md for details

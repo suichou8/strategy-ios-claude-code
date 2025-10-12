@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Shared
 
 /// API 客户端
 public actor APIClient {
@@ -17,6 +18,9 @@ public actor APIClient {
 
     /// 认证管理器
     private let authManager: AuthManager
+
+    /// Logger
+    private let logger = Logger.Category.network
 
     /// 初始化
     /// - Parameters:
@@ -39,9 +43,7 @@ public actor APIClient {
         self.session = session
         self.authManager = authManager
 
-        if APIConfig.enableLogging {
-            print("🔧 APIClient 初始化: baseURL=\(self.baseURL)")
-        }
+        logger.info("APIClient 初始化: baseURL=\(self.baseURL)")
     }
 
     /// 发起请求
@@ -55,15 +57,11 @@ public actor APIClient {
     ) async throws -> T {
         // 1. 构建 URL
         guard let url = buildURL(for: endpoint) else {
-            if APIConfig.enableLogging {
-                print("❌ 无效的 URL: baseURL=\(baseURL), path=\(endpoint.path)")
-            }
+            logger.error("无效的 URL: baseURL=\(baseURL), path=\(endpoint.path)")
             throw NetworkError.invalidURL
         }
 
-        if APIConfig.enableLogging {
-            print("🌐 API 请求: \(endpoint.method.rawValue) \(url.absoluteString)")
-        }
+        logger.debug("API 请求: \(endpoint.method.rawValue) \(url.absoluteString)")
 
         // 2. 构建 URLRequest
         var request = URLRequest(url: url)
@@ -99,35 +97,25 @@ public actor APIClient {
         }
 
         // 7. 处理 HTTP 状态码
-        if APIConfig.enableLogging {
-            print("📡 HTTP 响应: \(httpResponse.statusCode)")
-        }
+        logger.debug("HTTP 响应: \(httpResponse.statusCode)")
 
         switch httpResponse.statusCode {
         case 200...299:
             // 成功，继续解码
             break
         case 401:
-            if APIConfig.enableLogging {
-                print("❌ HTTP 401: 未授权")
-            }
+            logger.error("HTTP 401: 未授权")
             throw NetworkError.unauthorized
         case 429:
-            if APIConfig.enableLogging {
-                print("❌ HTTP 429: 请求过于频繁")
-            }
+            logger.warning("HTTP 429: 请求过于频繁")
             throw NetworkError.rateLimited
         case 500...599:
-            if APIConfig.enableLogging {
-                print("❌ HTTP \(httpResponse.statusCode): 服务器错误")
-            }
+            logger.error("HTTP \(httpResponse.statusCode): 服务器错误")
             throw NetworkError.serverError(statusCode: httpResponse.statusCode)
         default:
-            if APIConfig.enableLogging {
-                print("❌ HTTP \(httpResponse.statusCode): HTTP 错误")
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("响应内容: \(responseString)")
-                }
+            logger.error("HTTP \(httpResponse.statusCode): HTTP 错误")
+            if let responseString = String(data: data, encoding: .utf8) {
+                logger.error("响应内容: \(responseString)")
             }
             throw NetworkError.httpError(statusCode: httpResponse.statusCode)
         }

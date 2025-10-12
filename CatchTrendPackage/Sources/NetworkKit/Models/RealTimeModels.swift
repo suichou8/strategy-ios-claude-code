@@ -8,7 +8,7 @@
 import Foundation
 
 /// 实时数据
-public struct RealTimeData: Codable, Identifiable, Equatable {
+public struct RealTimeData: Codable, Identifiable, Equatable, Sendable {
     public var id: String { symbol }
 
     /// 股票代码
@@ -77,7 +77,7 @@ public struct RealTimeData: Codable, Identifiable, Equatable {
 }
 
 /// 实时数据响应
-public struct RealTimeResponse: Codable {
+public struct RealTimeResponse: Codable, Sendable {
     public let success: Bool
     public let message: String
     public let timestamp: String
