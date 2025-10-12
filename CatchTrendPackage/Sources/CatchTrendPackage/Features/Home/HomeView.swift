@@ -7,9 +7,11 @@
 
 import SwiftUI
 import NetworkKit
+import Shared
 
 public struct HomeView: View {
     let authManager: AuthManager
+    private let logger = Logger.Category.ui
 
     public init(authManager: AuthManager) {
         self.authManager = authManager
@@ -75,8 +77,8 @@ public struct HomeView: View {
 
     private func handleLogout() {
         authManager.clearAuth()
-        print("✅ 已登出")
-        print("✅ isAuthenticated: \(authManager.isAuthenticated)")
+        logger.info("用户已登出")
+        logger.debug("isAuthenticated: \(authManager.isAuthenticated)")
     }
 }
 
