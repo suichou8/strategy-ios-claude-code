@@ -16,15 +16,27 @@
    ```
 
 3. **工作原理**：
-   - `Configs/Base.xcconfig` 会引入 `Config/Secrets.xcconfig`
-   - API Key 会被注入到应用的 `Info.plist` 中
-   - `ChatGPTConfig.swift` 从 `Info.plist` 读取 API Key
+   - `Configs/Base.xcconfig` 引入 `Config/Secrets.xcconfig`
+   - Xcode Scheme 中配置环境变量引用 `$(OPENAI_API_KEY)`
+   - 运行时，API Key 通过环境变量传递给应用
+   - `ChatGPTConfig.swift` 从环境变量读取 API Key
    - `Secrets.xcconfig` 已添加到 `.gitignore`，不会被提交到 Git
 
 4. **验证配置**：
-   - 在 Xcode 中构建项目
-   - 如果配置正确，应用会正常运行
-   - 如果 API Key 未配置，会在日志中看到警告：`⚠️ OPENAI_API_KEY 未配置！`
+   ```bash
+   # 1. 验证 xcconfig 被正确加载
+   xcodebuild -scheme "CatchTrend Production" -showBuildSettings | grep OPENAI_API_KEY
+
+   # 2. 构建并运行
+   xcodebuild -scheme "CatchTrend Production" -sdk iphonesimulator build
+   ```
+
+   如果配置正确：
+   - ✅ 应用会正常运行
+   - ✅ API 请求会成功
+
+   如果未配置：
+   - ⚠️ 日志会显示：`OPENAI_API_KEY 未配置！`
 
 ### 方式 2: 在 Xcode 中直接配置
 

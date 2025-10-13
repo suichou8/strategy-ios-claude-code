@@ -55,9 +55,9 @@ INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPo
 
 // MARK: - Custom Info.plist Keys
 
-// 注入 API Key 到 Info.plist（从 Secrets.xcconfig 读取）
-// 如果 OPENAI_API_KEY 未定义，使用空字符串
-INFOPLIST_KEY_OPENAI_API_KEY = $(OPENAI_API_KEY)
+// 直接注入自定义字段到 Info.plist
+// 使用 INFOPLIST_OTHER_PREPROCESSOR_FLAGS 或 INFOPLIST_PREFIX_HEADER 无法工作
+// 最简单的方式是在代码中直接使用环境变量
 
 // MARK: - Linking
 
