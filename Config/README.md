@@ -2,32 +2,41 @@
 
 ## 如何配置 API Key
 
-### 方式 1: 使用 xcconfig 文件（推荐 ✅）
+### 方式 1: 使用 Secrets.swift 文件（推荐 ✅）
 
-1. **复制示例文件**：
+这是最简单直接的配置方式，适合不需要上线到 App Store 的内部应用。
+
+1. **创建 Secrets.swift 文件**：
    ```bash
-   cd Config
-   cp Secrets.xcconfig.example Secrets.xcconfig
+   # 文件路径
+   CatchTrendPackage/Sources/Shared/Config/Secrets.swift
    ```
 
-2. **编辑 `Secrets.xcconfig`**，填入你的 OpenAI API Key：
-   ```
-   OPENAI_API_KEY = sk-proj-your-actual-api-key-here
+2. **编辑 `Secrets.swift`**，填入你的 OpenAI API Key：
+   ```swift
+   //
+   //  Secrets.swift
+   //  Shared
+   //
+
+   import Foundation
+
+   /// 敏感信息配置（此文件已加入 .gitignore，不会被提交到 Git）
+   public enum Secrets {
+       /// OpenAI API Key
+       public static let openAIAPIKey = "sk-proj-your-actual-api-key-here"
+   }
    ```
 
 3. **工作原理**：
-   - `Configs/Base.xcconfig` 引入 `Config/Secrets.xcconfig`
-   - Xcode Scheme 中配置环境变量引用 `$(OPENAI_API_KEY)`
-   - 运行时，API Key 通过环境变量传递给应用
-   - `ChatGPTConfig.swift` 从环境变量读取 API Key
-   - `Secrets.xcconfig` 已添加到 `.gitignore`，不会被提交到 Git
+   - `ChatGPTConfig.swift` 通过 `Secrets.openAIAPIKey` 读取 API Key
+   - `Secrets.swift` 已添加到 `.gitignore`，不会被提交到 Git
+   - **安全性**：API Key 在编译时固化到二进制中，不需要运行时读取
+   - **简单性**：不需要复杂的 xcconfig 或环境变量配置
 
 4. **验证配置**：
    ```bash
-   # 1. 验证 xcconfig 被正确加载
-   xcodebuild -scheme "CatchTrend Production" -showBuildSettings | grep OPENAI_API_KEY
-
-   # 2. 构建并运行
+   # 构建并运行
    xcodebuild -scheme "CatchTrend Production" -sdk iphonesimulator build
    ```
 
@@ -36,36 +45,24 @@
    - ✅ API 请求会成功
 
    如果未配置：
-   - ⚠️ 日志会显示：`OPENAI_API_KEY 未配置！`
+   - ❌ 编译会失败，提示找不到 `Secrets` 模块
 
-### 方式 2: 在 Xcode 中直接配置
+### 方式 2: 使用 xcconfig 文件（已废弃）
 
-1. 打开 Xcode
-2. 选择 scheme（Product > Scheme > Edit Scheme）
-3. 选择 "Run" > "Arguments"
-4. 在 "Environment Variables" 中添加：
-   - Name: `OPENAI_API_KEY`
-   - Value: 你的 API Key
+⚠️ **注意**：此方式已被方式 1 替代，不再推荐使用。
 
-### 方式 3: 在代码中直接配置（仅开发环境）
+如果你仍然想使用 xcconfig 方式，可以参考旧版文档。
 
-编辑 `CatchTrendPackage/Sources/Shared/Config/ChatGPTConfig.swift`：
+### 方式 3: 在 Xcode 中直接配置（已废弃）
 
-```swift
-public enum ChatGPTConfig {
-    public static let apiKey = "your-api-key-here"
-    // ...
-}
-```
-
-**⚠️ 注意：这种方式不要提交到 Git！**
+⚠️ **注意**：此方式已被方式 1 替代，不再推荐使用。
 
 ## 安全建议
 
-- ✅ 使用 xcconfig 文件（已加入 .gitignore）
-- ✅ 使用环境变量
+- ✅ 使用 Secrets.swift 文件（已加入 .gitignore）
+- ✅ 使用环境变量（适合 CI/CD）
 - ✅ 使用 CI/CD 的 secrets 管理
-- ❌ 不要在代码中硬编码 API Key
+- ❌ 不要在 ChatGPTConfig.swift 等主要配置文件中硬编码 API Key
 - ❌ 不要提交 API Key 到 Git 仓库
 - ❌ 不要在 Xcode scheme 文件中存储 API Key（这些文件会被共享）
 
@@ -85,6 +82,7 @@ public enum ChatGPTConfig {
 ## 团队协作
 
 每个团队成员需要：
-1. Clone 项目后，创建自己的 `Config/Secrets.xcconfig` 文件
+1. Clone 项目后，创建自己的 `CatchTrendPackage/Sources/Shared/Config/Secrets.swift` 文件
 2. 从团队负责人那里获取 API Key
 3. 不要共享自己的 API Key
+4. 不要提交 `Secrets.swift` 文件到 Git（已自动在 .gitignore 中忽略）

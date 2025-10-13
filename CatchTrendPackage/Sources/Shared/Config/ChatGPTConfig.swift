@@ -137,27 +137,10 @@ public enum ChatGPTConfig {
     /// API Base URL (不包含具体endpoint，由服务层添加)
     public static let baseURL = "https://api.openai.com/v1"
 
-    /// API Key (从 Config/Secrets.xcconfig 通过编译时注入)
+    /// API Key (从 Secrets.swift 读取)
     ///
-    /// 配置方式：
-    /// 1. 创建 Config/Secrets.xcconfig 文件（参考 Config/README.md）
-    ///    ```bash
-    ///    cd Config
-    ///    cp Secrets.xcconfig.example Secrets.xcconfig
-    ///    # 编辑 Secrets.xcconfig，填入你的 API Key
-    ///    ```
-    /// 2. xcconfig 中的 OPENAI_API_KEY 会在编译时被注入
-    /// 3. 如果未配置，会在运行时显示警告
-    public static var apiKey: String {
-        // 从环境变量读取（xcconfig 中定义的变量会自动成为环境变量）
-        if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !key.isEmpty {
-            return key
-        }
-
-        // 如果未配置，返回空字符串并记录警告
-        Logger.Category.network.warning("⚠️ OPENAI_API_KEY 未配置！请参考 Config/README.md 进行配置")
-        return ""
-    }
+    /// ⚠️ 注意：Secrets.swift 文件包含 API Key，已添加到 .gitignore，不会被提交到 Git
+    public static let apiKey = Secrets.openAIAPIKey
 
     // MARK: - Current Model Configuration
 
