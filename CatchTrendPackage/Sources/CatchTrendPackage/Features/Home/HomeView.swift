@@ -43,7 +43,7 @@ public struct HomeView: View {
                             // 实时数据
                             if let realTime = data.realTime {
                                 VStack(spacing: 8) {
-                                    Text("¥\(String(format: "%.2f", realTime.currentPrice ?? 0.0))")
+                                    Text("$\(String(format: "%.2f", realTime.currentPrice ?? 0.0))")
                                         .font(.system(size: 48, weight: .bold))
 
                                     HStack(spacing: 4) {
@@ -58,29 +58,53 @@ public struct HomeView: View {
 
                             // 数据详情
                             VStack(alignment: .leading, spacing: 12) {
-                                if let dailyKline = data.dailyKline {
-                                    DataInfoRow(
-                                        icon: "chart.bar.fill",
-                                        title: "日K线数据",
-                                        value: "\(dailyKline.data.count) 条"
-                                    )
+                                if let dailyKline = data.dailyKline, let lastItem = dailyKline.data.last {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Label("日K线（最近）", systemImage: "chart.bar.fill")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        HStack(spacing: 8) {
+                                            Text("开: $\(String(format: "%.2f", lastItem.open ?? 0))")
+                                            Text("高: $\(String(format: "%.2f", lastItem.high ?? 0))")
+                                            Text("低: $\(String(format: "%.2f", lastItem.low ?? 0))")
+                                            Text("收: $\(String(format: "%.2f", lastItem.close ?? 0))")
+                                        }
+                                        .font(.caption)
+                                    }
                                 }
 
-                                if let minuteKline = data.minuteKline {
-                                    DataInfoRow(
-                                        icon: "chart.line.uptrend.xyaxis",
-                                        title: "分钟K线数据",
-                                        value: "\(minuteKline.data.count) 条"
-                                    )
+                                if let minuteKline = data.minuteKline, let lastItem = minuteKline.data.last {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Label("\(minuteKline.period) K线（最近）", systemImage: "chart.line.uptrend.xyaxis")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        HStack(spacing: 8) {
+                                            Text("开: $\(String(format: "%.2f", lastItem.open ?? 0))")
+                                            Text("高: $\(String(format: "%.2f", lastItem.high ?? 0))")
+                                            Text("低: $\(String(format: "%.2f", lastItem.low ?? 0))")
+                                            Text("收: $\(String(format: "%.2f", lastItem.close ?? 0))")
+                                        }
+                                        .font(.caption)
+                                    }
                                 }
 
-                                if let minuteData = data.minuteData {
-                                    DataInfoRow(
-                                        icon: "clock.fill",
-                                        title: "分时数据",
-                                        value: "\(minuteData.data.count) 条"
-                                    )
+                                if let minuteData = data.minuteData, let lastItem = minuteData.data.last {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Label("分时数据（最近）", systemImage: "clock.fill")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+
+                                        HStack(spacing: 8) {
+                                            Text("价格: $\(String(format: "%.2f", lastItem.price ?? 0))")
+                                            Text("均价: $\(String(format: "%.2f", lastItem.avgPrice ?? 0))")
+                                        }
+                                        .font(.caption)
+                                    }
                                 }
+
+                                Divider()
 
                                 DataInfoRow(
                                     icon: "clock.arrow.circlepath",
@@ -109,6 +133,58 @@ public struct HomeView: View {
                                 .padding()
                                 .background(.orange.opacity(0.1))
                                 .cornerRadius(8)
+                                .padding(.horizontal)
+                            }
+
+                            // ChatGPT 分析按钮
+                            Button {
+                                Task {
+                                    await viewModel.analyzeTrend()
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: viewModel.isAnalyzing ? "brain" : "sparkles")
+                                        .font(.title3)
+
+                                    Text(viewModel.isAnalyzing ? "分析中..." : "ChatGPT 趋势分析")
+                                        .font(.headline)
+
+                                    if viewModel.isAnalyzing {
+                                        ProgressView()
+                                            .scaleEffect(0.8)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    LinearGradient(
+                                        colors: [.blue, .purple],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundStyle(.white)
+                                .cornerRadius(12)
+                            }
+                            .disabled(viewModel.isAnalyzing)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+
+                            // 分析结果
+                            if let analysis = viewModel.analysisResult {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Label("AI 分析结果", systemImage: "lightbulb.fill")
+                                        .font(.headline)
+                                        .foregroundStyle(.blue)
+
+                                    Text(analysis)
+                                        .font(.body)
+                                        .foregroundStyle(.primary)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                .padding()
+                                .background(.blue.opacity(0.1))
+                                .cornerRadius(12)
                                 .padding(.horizontal)
                             }
 
