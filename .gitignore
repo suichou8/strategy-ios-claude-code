@@ -62,3 +62,5 @@ Package.pins
 
 # OS
 Thumbs.db
+# Secrets (API Keys, etc.)
+Config/Secrets.xcconfig
