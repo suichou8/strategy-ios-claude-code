@@ -137,12 +137,26 @@ public enum ChatGPTConfig {
     /// API Base URL (不包含具体endpoint，由服务层添加)
     public static let baseURL = "https://api.openai.com/v1"
 
-    /// API Key (应该从环境变量或安全存储中获取)
-    /// 注意：实际应用中不应硬编码 API Key
+    /// API Key (从环境变量或 Info.plist 中读取)
+    ///
+    /// 配置方式：
+    /// 1. 创建 Config/Secrets.xcconfig 文件（参考 Config/README.md）
+    /// 2. 在 xcconfig 中设置：OPENAI_API_KEY = your-key-here
+    /// 3. Xcode 会自动将其注入到应用的 Info.plist
     public static var apiKey: String {
-        // TODO: 从 Keychain 或配置文件中获取
-        // 暂时使用环境变量或返回空字符串
-        return ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+        // 优先从 Info.plist 读取（由 xcconfig 注入）
+        if let key = Bundle.main.object(forInfoDictionaryKey: "OPENAI_API_KEY") as? String, !key.isEmpty {
+            return key
+        }
+
+        // 回退到环境变量（用于 Xcode scheme 配置或测试）
+        if let key = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !key.isEmpty {
+            return key
+        }
+
+        // 如果都没有，返回空字符串（会在实际请求时失败并给出友好错误提示）
+        Logger.Category.network.warning("⚠️ OPENAI_API_KEY 未配置！请参考 Config/README.md 进行配置")
+        return ""
     }
 
     // MARK: - Current Model Configuration

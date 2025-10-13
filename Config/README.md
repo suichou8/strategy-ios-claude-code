@@ -2,20 +2,29 @@
 
 ## 如何配置 API Key
 
-### 方式 1: 使用 xcconfig 文件（推荐）
+### 方式 1: 使用 xcconfig 文件（推荐 ✅）
 
-1. 复制示例文件：
+1. **复制示例文件**：
    ```bash
    cd Config
    cp Secrets.xcconfig.example Secrets.xcconfig
    ```
 
-2. 编辑 `Secrets.xcconfig` 文件，填入你的 OpenAI API Key：
+2. **编辑 `Secrets.xcconfig`**，填入你的 OpenAI API Key：
    ```
-   OPENAI_API_KEY = your-actual-api-key-here
+   OPENAI_API_KEY = sk-proj-your-actual-api-key-here
    ```
 
-3. 这个文件已经添加到 `.gitignore`，不会被提交到 Git 仓库
+3. **工作原理**：
+   - `Configs/Base.xcconfig` 会引入 `Config/Secrets.xcconfig`
+   - API Key 会被注入到应用的 `Info.plist` 中
+   - `ChatGPTConfig.swift` 从 `Info.plist` 读取 API Key
+   - `Secrets.xcconfig` 已添加到 `.gitignore`，不会被提交到 Git
+
+4. **验证配置**：
+   - 在 Xcode 中构建项目
+   - 如果配置正确，应用会正常运行
+   - 如果 API Key 未配置，会在日志中看到警告：`⚠️ OPENAI_API_KEY 未配置！`
 
 ### 方式 2: 在 Xcode 中直接配置
 

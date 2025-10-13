@@ -53,6 +53,12 @@ INFOPLIST_KEY_UILaunchScreen_Generation = YES
 INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
 INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
 
+// MARK: - Custom Info.plist Keys
+
+// 注入 API Key 到 Info.plist（从 Secrets.xcconfig 读取）
+// 如果 OPENAI_API_KEY 未定义，使用空字符串
+INFOPLIST_KEY_OPENAI_API_KEY = $(OPENAI_API_KEY)
+
 // MARK: - Linking
 
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks
@@ -118,3 +124,11 @@ MTL_FAST_MATH = YES
 // MARK: - String Catalog
 
 STRING_CATALOG_GENERATE_SYMBOLS = YES
+
+// MARK: - Secrets (API Keys, etc.)
+
+// 引入 Secrets.xcconfig（如果存在的话）
+// 这个文件包含 OPENAI_API_KEY 等敏感信息
+// 文件位置: ../Config/Secrets.xcconfig
+// 如果文件不存在，构建也能成功，但 API Key 会是空字符串
+#include? "../Config/Secrets.xcconfig"
