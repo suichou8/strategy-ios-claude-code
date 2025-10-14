@@ -62,3 +62,6 @@ Package.pins
 
 # OS
 Thumbs.db
+# Secrets (API Keys, etc.)
+Config/Secrets.xcconfig
+CatchTrendPackage/Sources/Shared/Config/Secrets.swift
