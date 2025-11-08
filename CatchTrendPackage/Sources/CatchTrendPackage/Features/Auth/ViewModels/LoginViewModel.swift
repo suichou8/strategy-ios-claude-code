@@ -72,14 +72,9 @@ public final class LoginViewModel {
 
             isLoading = false
 
-            if response.success {
-                // 登录成功，AuthManager 已自动更新状态
-                logSuccess(response: response)
-            } else {
-                // 登录失败（服务端返回失败）
-                logger.error("登录失败: \(response.message)")
-                handleLoginFailure(message: response.message)
-            }
+            // 登录成功，AuthManager 已自动更新状态
+            // API 成功返回即表示登录成功，失败会在 catch 块中处理
+            logSuccess(response: response)
         } catch let error as NetworkError {
             isLoading = false
             logger.error("网络错误", error: error)
@@ -100,7 +95,7 @@ public final class LoginViewModel {
     // MARK: - Private Helpers
 
     private func logSuccess(response: LoginResponse) {
-        logger.info("登录成功: \(response.message)")
+        logger.info("登录成功: \(response.message ?? "成功")")
         logger.debug("Token: \(response.accessToken.prefix(20))...")
         logger.debug("isAuthenticated: \(authManager.isAuthenticated)")
         logger.debug("currentUsername: \(authManager.currentUsername ?? "nil")")

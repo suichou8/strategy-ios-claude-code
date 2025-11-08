@@ -162,12 +162,10 @@ extension APIClient {
             responseType: LoginResponse.self
         )
 
-        // 登录成功后保存 Token
-        if response.success {
-            let token = response.accessToken
-            try await MainActor.run {
-                try authManager.saveAuth(token: token, username: username)
-            }
+        // 登录成功后保存 Token（API 成功返回即表示登录成功）
+        let token = response.accessToken
+        try await MainActor.run {
+            try authManager.saveAuth(token: token, username: username)
         }
 
         return response
@@ -235,17 +233,15 @@ extension APIClient {
 
 /// 登录响应
 public struct LoginResponse: Decodable, Sendable {
-    public let success: Bool
-    public let message: String
     public let accessToken: String
     public let tokenType: String
     public let expiresIn: Int
+    public let message: String?
 
-    public init(success: Bool, message: String, accessToken: String, tokenType: String, expiresIn: Int) {
-        self.success = success
-        self.message = message
+    public init(accessToken: String, tokenType: String, expiresIn: Int, message: String? = nil) {
         self.accessToken = accessToken
         self.tokenType = tokenType
         self.expiresIn = expiresIn
+        self.message = message
     }
 }

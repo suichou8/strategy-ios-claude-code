@@ -57,7 +57,7 @@ extension APIEndpoint {
     public var path: String {
         switch self {
         case .login:
-            return "/api/v1/auth/login"
+            return "/api/v1/stocks/auth/login"
         case .comprehensive(let symbol, _):
             return "/api/v1/stocks/\(symbol)/comprehensive"
         case .kline:
