@@ -22,12 +22,6 @@ struct ContentView: View {
                 authManager: authManager,
                 apiClient: apiClient
             )
-
-            // 原本的主页（已注释）
-            // HomeView(
-            //     authManager: authManager,
-            //     apiClient: apiClient
-            // )
         } else {
             // 未登录 - 显示登录页
             LoginView(
