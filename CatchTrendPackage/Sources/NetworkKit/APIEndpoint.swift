@@ -32,6 +32,12 @@ public enum APIEndpoint {
 
     /// 获取实时数据
     case realtime(symbols: [String], timestamp: Int)
+
+    /// CONL 分析 - 最新交易日
+    case conlAnalysisLatest(klineType: String, includeMarketContext: Bool, timestamp: Int?)
+
+    /// CONL 分析 - 指定日期
+    case conlAnalysisDate(date: String, includeMarketContext: Bool, timestamp: Int?)
 }
 
 extension APIEndpoint {
@@ -40,7 +46,7 @@ extension APIEndpoint {
         switch self {
         case .login:
             return .post
-        case .comprehensive:
+        case .comprehensive, .conlAnalysisLatest, .conlAnalysisDate:
             return .get
         case .kline, .minute, .realtime:
             return .post
@@ -60,6 +66,10 @@ extension APIEndpoint {
             return "/api/v1/stocks/minute"
         case .realtime:
             return "/api/v1/stocks/realtime"
+        case .conlAnalysisLatest:
+            return "/api/v1/analyze/conl/latest"
+        case .conlAnalysisDate(let date, _, _):
+            return "/api/v1/analyze/conl/\(date)"
         }
     }
 
@@ -68,7 +78,7 @@ extension APIEndpoint {
         switch self {
         case .login:
             return false
-        case .comprehensive, .kline, .minute, .realtime:
+        case .comprehensive, .kline, .minute, .realtime, .conlAnalysisLatest, .conlAnalysisDate:
             return true
         }
     }
@@ -79,7 +89,7 @@ extension APIEndpoint {
         case .login(let username, let password):
             return LoginRequest(username: username, password: password)
 
-        case .comprehensive:
+        case .comprehensive, .conlAnalysisLatest, .conlAnalysisDate:
             return nil
 
         case .kline(let symbol, let period, let count, let timestamp):
@@ -101,6 +111,26 @@ extension APIEndpoint {
                 return [URLQueryItem(name: "timestamp", value: "\(timestamp)")]
             }
             return nil
+
+        case .conlAnalysisLatest(let klineType, let includeMarketContext, let timestamp):
+            var items = [
+                URLQueryItem(name: "kline_type", value: klineType),
+                URLQueryItem(name: "include_market_context", value: includeMarketContext ? "true" : "false")
+            ]
+            if let timestamp = timestamp {
+                items.append(URLQueryItem(name: "_t", value: "\(timestamp)"))
+            }
+            return items
+
+        case .conlAnalysisDate(_, let includeMarketContext, let timestamp):
+            var items = [
+                URLQueryItem(name: "include_market_context", value: includeMarketContext ? "true" : "false")
+            ]
+            if let timestamp = timestamp {
+                items.append(URLQueryItem(name: "_t", value: "\(timestamp)"))
+            }
+            return items
+
         default:
             return nil
         }

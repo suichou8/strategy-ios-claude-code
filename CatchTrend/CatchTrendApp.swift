@@ -21,6 +21,7 @@ struct CatchTrendApp: App {
                 authManager: authManager,
                 apiClient: apiClient
             )
+            .preferredColorScheme(.light)  // 禁用夜间模式，始终使用亮色模式
         }
     }
 }

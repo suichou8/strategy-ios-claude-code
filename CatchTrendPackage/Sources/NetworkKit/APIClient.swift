@@ -126,6 +126,7 @@ public actor APIClient {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             return try decoder.decode(T.self, from: data)
         } catch {
+            logger.error("解码失败: \(error)")
             throw NetworkError.decodingError(error)
         }
     }
@@ -184,6 +185,48 @@ extension APIClient {
         return try await request(
             .comprehensive(symbol: symbol, timestamp: timestamp),
             responseType: ComprehensiveResponse.self
+        )
+    }
+
+    /// 获取 CONL 最新交易日分析
+    /// - Parameters:
+    ///   - klineType: K线类型（auto/15min/30min），默认 auto
+    ///   - includeMarketContext: 是否包含市场背景，默认 true
+    ///   - timestamp: 时间戳（可选，用于避免缓存）
+    /// - Returns: CONL 分析响应
+    public func getConlAnalysisLatest(
+        klineType: String = "auto",
+        includeMarketContext: Bool = true,
+        timestamp: Int? = nil
+    ) async throws -> ConlAnalysisResponse {
+        return try await request(
+            .conlAnalysisLatest(
+                klineType: klineType,
+                includeMarketContext: includeMarketContext,
+                timestamp: timestamp
+            ),
+            responseType: ConlAnalysisResponse.self
+        )
+    }
+
+    /// 获取 CONL 指定日期分析
+    /// - Parameters:
+    ///   - date: 日期（YYYY-MM-DD 格式）
+    ///   - includeMarketContext: 是否包含市场背景，默认 true
+    ///   - timestamp: 时间戳（可选，用于避免缓存）
+    /// - Returns: CONL 分析响应
+    public func getConlAnalysisDate(
+        date: String,
+        includeMarketContext: Bool = true,
+        timestamp: Int? = nil
+    ) async throws -> ConlAnalysisResponse {
+        return try await request(
+            .conlAnalysisDate(
+                date: date,
+                includeMarketContext: includeMarketContext,
+                timestamp: timestamp
+            ),
+            responseType: ConlAnalysisResponse.self
         )
     }
 }
