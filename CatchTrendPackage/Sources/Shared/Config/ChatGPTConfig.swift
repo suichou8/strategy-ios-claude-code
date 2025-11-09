@@ -140,7 +140,8 @@ public enum ChatGPTConfig {
     /// API Key (从 Secrets.swift 读取)
     ///
     /// ⚠️ 注意：Secrets.swift 文件包含 API Key，已添加到 .gitignore，不会被提交到 Git
-    public static let apiKey = Secrets.openAIAPIKey
+//    public static let apiKey = Secrets.openAIAPIKey
+    public static let apiKey = ""
 
     // MARK: - Current Model Configuration
 
