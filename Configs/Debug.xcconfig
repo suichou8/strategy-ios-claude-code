@@ -17,6 +17,12 @@
 // Debug 环境使用 .debug 后缀，可以与 Release 版本共存
 PRODUCT_BUNDLE_IDENTIFIER = com.sunshinenew07.CatchTrend.debug
 
+// MARK: - Code Signing
+
+// 仅在真机设备上使用手动签名配置
+CODE_SIGN_IDENTITY[sdk=iphoneos*] = iPhone Developer
+PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] = CatchTrend Debug Profile
+
 // MARK: - Build Settings
 
 ONLY_ACTIVE_ARCH = YES
