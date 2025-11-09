@@ -62,11 +62,17 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-          # 安装 Provisioning Profile
+          # 安装 Provisioning Profile（使用 UUID 作为文件名）
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+          # 提取 Provisioning Profile 的 UUID
+          PP_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+
+          # 复制到正确位置，使用 UUID 作为文件名
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
 
           echo "✅ 证书和 Provisioning Profile 安装完成"
+          echo "📋 Provisioning Profile UUID: $PP_UUID"
 
       # ============================================
       # 4. 解析版本号
@@ -169,9 +175,17 @@ jobs:
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
           APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
         run: |
-          # 创建 API Key 文件
-          API_KEY_PATH=$RUNNER_TEMP/AuthKey_$APPLE_API_KEY_ID.p8
+          # 创建 App Store Connect API Key 目录（altool 会在这里查找）
+          mkdir -p ~/.appstoreconnect/private_keys
+
+          # 创建 API Key 文件（必须使用正确的命名格式和位置）
+          API_KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_$APPLE_API_KEY_ID.p8
           echo -n "$APPLE_API_KEY_CONTENT" | base64 --decode -o $API_KEY_PATH
+
+          # 设置文件权限
+          chmod 600 $API_KEY_PATH
+
+          echo "📋 API Key 文件已创建: $API_KEY_PATH"
 
           # 使用 xcrun altool 上传
           xcrun altool --upload-app \
@@ -199,8 +213,15 @@ jobs:
       - name: Clean up keychain and provisioning profile
         if: always()
         run: |
+          # 删除临时 keychain
           security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+
+          # 清理 Provisioning Profiles
           rm -rf ~/Library/MobileDevice/Provisioning\ Profiles || true
+
+          # 清理 API Key
+          rm -rf ~/.appstoreconnect || true
+
           echo "✅ 清理完成"
 
       # ============================================
