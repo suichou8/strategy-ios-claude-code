@@ -7,6 +7,9 @@ on:
       - 'v*.*.*-beta.*'    # 匹配 v1.0.0-beta.1 等格式
   workflow_dispatch:       # 允许手动触发
 
+permissions:
+  contents: write          # 允许创建 GitHub Releases 和上传 artifacts
+
 env:
   XCODE_VERSION: '26.0'
   SCHEME: 'CatchTrend'
