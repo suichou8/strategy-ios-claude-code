@@ -65,3 +65,6 @@ Thumbs.db
 # Secrets (API Keys, etc.)
 Config/Secrets.xcconfig
 CatchTrendPackage/Sources/Shared/Config/Secrets.swift
+
+# Claude Code
+.claude/

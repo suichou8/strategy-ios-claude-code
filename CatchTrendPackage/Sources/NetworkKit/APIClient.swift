@@ -126,6 +126,7 @@ public actor APIClient {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
             return try decoder.decode(T.self, from: data)
         } catch {
+            logger.error("解码失败: \(error)")
             throw NetworkError.decodingError(error)
         }
     }
@@ -161,12 +162,10 @@ extension APIClient {
             responseType: LoginResponse.self
         )
 
-        // 登录成功后保存 Token
-        if response.success {
-            let token = response.accessToken
-            try await MainActor.run {
-                try authManager.saveAuth(token: token, username: username)
-            }
+        // 登录成功后保存 Token（API 成功返回即表示登录成功）
+        let token = response.accessToken
+        try await MainActor.run {
+            try authManager.saveAuth(token: token, username: username)
         }
 
         return response
@@ -186,23 +185,63 @@ extension APIClient {
             responseType: ComprehensiveResponse.self
         )
     }
+
+    /// 获取 CONL 最新交易日分析
+    /// - Parameters:
+    ///   - klineType: K线类型（auto/15min/30min），默认 auto
+    ///   - includeMarketContext: 是否包含市场背景，默认 true
+    ///   - timestamp: 时间戳（可选，用于避免缓存）
+    /// - Returns: CONL 分析响应
+    public func getConlAnalysisLatest(
+        klineType: String = "auto",
+        includeMarketContext: Bool = true,
+        timestamp: Int? = nil
+    ) async throws -> ConlAnalysisResponse {
+        return try await request(
+            .conlAnalysisLatest(
+                klineType: klineType,
+                includeMarketContext: includeMarketContext,
+                timestamp: timestamp
+            ),
+            responseType: ConlAnalysisResponse.self
+        )
+    }
+
+    /// 获取 CONL 指定日期分析
+    /// - Parameters:
+    ///   - date: 日期（YYYY-MM-DD 格式）
+    ///   - includeMarketContext: 是否包含市场背景，默认 true
+    ///   - timestamp: 时间戳（可选，用于避免缓存）
+    /// - Returns: CONL 分析响应
+    public func getConlAnalysisDate(
+        date: String,
+        includeMarketContext: Bool = true,
+        timestamp: Int? = nil
+    ) async throws -> ConlAnalysisResponse {
+        return try await request(
+            .conlAnalysisDate(
+                date: date,
+                includeMarketContext: includeMarketContext,
+                timestamp: timestamp
+            ),
+            responseType: ConlAnalysisResponse.self
+        )
+    }
 }
 
 // MARK: - Response Models
 
 /// 登录响应
 public struct LoginResponse: Decodable, Sendable {
-    public let success: Bool
-    public let message: String
     public let accessToken: String
     public let tokenType: String
     public let expiresIn: Int
+    public let message: String?
 
-    public init(success: Bool, message: String, accessToken: String, tokenType: String, expiresIn: Int) {
-        self.success = success
-        self.message = message
+    public init(accessToken: String, tokenType: String, expiresIn: Int, message: String? = nil) {
         self.accessToken = accessToken
         self.tokenType = tokenType
         self.expiresIn = expiresIn
+        self.message = message
     }
 }
