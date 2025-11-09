@@ -8,7 +8,7 @@ on:
   workflow_dispatch:       # 允许手动触发
 
 env:
-  XCODE_VERSION: '15.0'
+  XCODE_VERSION: '26.0'
   SCHEME: 'CatchTrend'
   CONFIGURATION: 'Release'
   EXPORT_METHOD: 'app-store'
@@ -16,7 +16,7 @@ env:
 jobs:
   deploy:
     name: Build and Deploy to TestFlight
-    runs-on: macos-14  # 使用最新的 macOS runner
+    runs-on: macos-26  # 使用 macOS 26 with Xcode 26.0
 
     steps:
       # ============================================
@@ -123,7 +123,6 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM=YWCR255LN4 \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
             clean archive
 
           echo "✅ Archive 构建完成"
