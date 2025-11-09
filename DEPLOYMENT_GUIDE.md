@@ -149,11 +149,30 @@ base64 -i AuthKey_XXXXXXXXXX.p8 -o apikey.base64.txt
 |------------|-------|------|
 | `APPLE_API_KEY_ID` | `XXXXXXXXXX` | App Store Connect API Key ID（10位字符） |
 | `APPLE_API_ISSUER_ID` | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` | API Issuer ID（UUID格式） |
-| `APPLE_API_KEY_CONTENT` | `certificate.base64.txt` 的内容 | API Key 的 base64 编码 |
-| `BUILD_CERTIFICATE_BASE64` | `certificate.base64.txt` 的内容 | Distribution Certificate 的 base64 编码 |
+| `APPLE_API_KEY_CONTENT` | `apikey.base64.txt` 的内容 | **App Store Connect API Key (.p8) 的 base64 编码** |
+| `BUILD_CERTIFICATE_BASE64` | `certificate.base64.txt` 的内容 | **Distribution Certificate (.p12) 的 base64 编码** |
 | `P12_PASSWORD` | 你设置的密码 | .p12 证书的导出密码 |
 | `BUILD_PROVISION_PROFILE_BASE64` | `profile.base64.txt` 的内容 | Provisioning Profile 的 base64 编码 |
 | `KEYCHAIN_PASSWORD` | 任意强密码 | 用于临时 Keychain 的密码（如 `gh-actions-2024`） |
+
+**重要说明 - 三个不同的文件**：
+
+📄 **文件对应关系**：
+1. **App Store Connect API Key (.p8 文件)**
+   - 来源：App Store Connect → Users and Access → Keys 下载的 `AuthKey_XXXXXXXXXX.p8`
+   - 用途：允许 GitHub Actions 自动上传 IPA 到 TestFlight
+   - Base64 编码后 → `APPLE_API_KEY_CONTENT`
+
+2. **Distribution Certificate (.p12 文件)**
+   - 来源：钥匙串导出的 `CatchTrend_Distribution.p12`
+   - 用途：用于签名 iOS 应用
+   - Base64 编码后 → `BUILD_CERTIFICATE_BASE64`
+   - 需要密码 → `P12_PASSWORD`
+
+3. **Provisioning Profile (.mobileprovision 文件)**
+   - 来源：Apple Developer 下载的 `CatchTrend_AppStore_Profile.mobileprovision`
+   - 用途：将证书、App ID、设备关联起来
+   - Base64 编码后 → `BUILD_PROVISION_PROFILE_BASE64`
 
 **注意**：
 - ⚠️ `APPLE_TEAM_ID`（`YWCR255LN4`）已经硬编码在 workflow 中，**不需要**配置为 Secret
