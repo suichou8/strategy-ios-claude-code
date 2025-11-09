@@ -17,6 +17,12 @@
 // Release 环境使用正式的 Bundle ID
 PRODUCT_BUNDLE_IDENTIFIER = com.sunshinenew07.CatchTrend
 
+// MARK: - Code Signing
+
+// 仅在真机设备上使用手动签名配置（用于 App Store 发布）
+CODE_SIGN_IDENTITY[sdk=iphoneos*] = iPhone Distribution
+PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*] = CatchTrend AppStore Profile
+
 // MARK: - Build Settings
 
 COPY_PHASE_STRIP = NO
