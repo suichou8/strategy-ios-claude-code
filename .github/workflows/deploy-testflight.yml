@@ -147,6 +147,11 @@ jobs:
             <false/>
             <key>signingStyle</key>
             <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.sunshinenew07.CatchTrend</key>
+              <string>CatchTrend AppStore Profile</string>
+            </dict>
           </dict>
           </plist>
           PLIST
