@@ -1,0 +1,229 @@
+name: Deploy to TestFlight
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'           # 匹配 v1.0.0, v1.2.3 等格式
+      - 'v*.*.*-beta.*'    # 匹配 v1.0.0-beta.1 等格式
+  workflow_dispatch:       # 允许手动触发
+
+env:
+  XCODE_VERSION: '15.0'
+  SCHEME: 'CatchTrend'
+  CONFIGURATION: 'Release'
+  EXPORT_METHOD: 'app-store'
+
+jobs:
+  deploy:
+    name: Build and Deploy to TestFlight
+    runs-on: macos-14  # 使用最新的 macOS runner
+
+    steps:
+      # ============================================
+      # 1. Checkout 代码
+      # ============================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ============================================
+      # 2. 设置 Xcode 版本
+      # ============================================
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_${{ env.XCODE_VERSION }}.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      # ============================================
+      # 3. 安装证书和 Provisioning Profile
+      # ============================================
+      - name: Install Apple Certificate and Provisioning Profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # 创建临时目录
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # 解码证书和 Provisioning Profile
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+          # 创建临时 keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # 导入证书到 keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # 安装 Provisioning Profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+          echo "✅ 证书和 Provisioning Profile 安装完成"
+
+      # ============================================
+      # 4. 解析版本号
+      # ============================================
+      - name: Get version from tag
+        id: version
+        run: |
+          # 从 tag 中提取版本号（去掉 v 前缀）
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+
+      # ============================================
+      # 5. 递增 Build Number
+      # ============================================
+      - name: Set Build Number
+        run: |
+          # 使用 GitHub run number 作为 build number
+          BUILD_NUMBER=${{ github.run_number }}
+          echo "🔢 Build Number: $BUILD_NUMBER"
+
+          # 设置 build number
+          xcrun agvtool new-version -all $BUILD_NUMBER
+
+          # 验证
+          echo "📋 当前版本信息:"
+          xcrun agvtool what-version
+          xcrun agvtool what-marketing-version
+
+      # ============================================
+      # 6. 安装依赖（如果使用 SPM）
+      # ============================================
+      - name: Resolve Swift Package Dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -scheme ${{ env.SCHEME }}
+
+      # ============================================
+      # 7. 构建 Archive
+      # ============================================
+      - name: Build Archive
+        run: |
+          xcodebuild archive \
+            -scheme ${{ env.SCHEME }} \
+            -configuration ${{ env.CONFIGURATION }} \
+            -archivePath $RUNNER_TEMP/CatchTrend.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=YWCR255LN4 \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            clean archive
+
+          echo "✅ Archive 构建完成"
+
+      # ============================================
+      # 8. 创建 ExportOptions.plist
+      # ============================================
+      - name: Create ExportOptions.plist
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${{ env.EXPORT_METHOD }}</string>
+            <key>teamID</key>
+            <string>YWCR255LN4</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <false/>
+            <key>signingStyle</key>
+            <string>manual</string>
+          </dict>
+          </plist>
+          PLIST
+
+          echo "✅ ExportOptions.plist 创建完成"
+
+      # ============================================
+      # 9. 导出 IPA
+      # ============================================
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/CatchTrend.xcarchive \
+            -exportPath $RUNNER_TEMP/export \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist
+
+          echo "✅ IPA 导出完成"
+
+      # ============================================
+      # 10. 上传到 TestFlight
+      # ============================================
+      - name: Upload to TestFlight
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          # 创建 API Key 文件
+          API_KEY_PATH=$RUNNER_TEMP/AuthKey_$APPLE_API_KEY_ID.p8
+          echo -n "$APPLE_API_KEY_CONTENT" | base64 --decode -o $API_KEY_PATH
+
+          # 使用 xcrun altool 上传
+          xcrun altool --upload-app \
+            -f $RUNNER_TEMP/export/*.ipa \
+            -t ios \
+            --apiKey $APPLE_API_KEY_ID \
+            --apiIssuer $APPLE_API_ISSUER_ID
+
+          echo "✅ 成功上传到 TestFlight"
+
+      # ============================================
+      # 11. 上传 IPA 到 GitHub Artifacts（备份）
+      # ============================================
+      - name: Upload IPA as Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CatchTrend-${{ steps.version.outputs.version }}-${{ github.run_number }}
+          path: ${{ runner.temp }}/export/*.ipa
+          retention-days: 30
+
+      # ============================================
+      # 12. 清理
+      # ============================================
+      - name: Clean up keychain and provisioning profile
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles || true
+          echo "✅ 清理完成"
+
+      # ============================================
+      # 13. 创建 GitHub Release（可选）
+      # ============================================
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref, 'beta') }}
+          generate_release_notes: true
+          body: |
+            ## 🚀 版本 ${{ steps.version.outputs.version }}
+
+            **Build Number**: ${{ github.run_number }}
+
+            ### 📦 下载
+            - 已自动上传到 TestFlight
+            - IPA 文件已上传到 GitHub Artifacts
+
+            ### 📝 变更日志
+            详见下方自动生成的 Release Notes
+
+            ---
+            🤖 由 GitHub Actions 自动部署
