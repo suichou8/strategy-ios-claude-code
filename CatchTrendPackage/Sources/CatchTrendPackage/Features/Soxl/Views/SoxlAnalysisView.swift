@@ -1,19 +1,19 @@
 //
-//  ConlAnalysisView.swift
+//  SoxlAnalysisView.swift
 //  CatchTrendPackage
 //
-//  Created by Claude Code on 2025/11/09.
+//  Created by Claude Code on 2025/11/16.
 //
 
 import SwiftUI
 import NetworkKit
 import Shared
 
-public struct ConlAnalysisView: View {
-    @State private var viewModel: ConlAnalysisViewModel
+public struct SoxlAnalysisView: View {
+    @State private var viewModel: SoxlAnalysisViewModel
 
     public init(authManager: AuthManager, apiClient: APIClient) {
-        self._viewModel = State(wrappedValue: ConlAnalysisViewModel(
+        self._viewModel = State(wrappedValue: SoxlAnalysisViewModel(
             authManager: authManager,
             apiClient: apiClient
         ))
@@ -37,7 +37,7 @@ public struct ConlAnalysisView: View {
                     emptyStateView
                 }
             }
-            .navigationTitle("CONL 分析报告")
+            .navigationTitle("SOXL 分析报告")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -76,7 +76,7 @@ public struct ConlAnalysisView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
-            Text("正在加载 CONL 分析数据...")
+            Text("正在加载 SOXL 分析数据...")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -447,7 +447,7 @@ public struct ConlAnalysisView: View {
     /// 分享分析报告
     private func shareAnalysis(_ analysis: String) {
         let activityVC = UIActivityViewController(
-            activityItems: ["CONL 分析报告\n\n\(analysis)"],
+            activityItems: ["SOXL 分析报告\n\n\(analysis)"],
             applicationActivities: nil
         )
 
@@ -461,7 +461,7 @@ public struct ConlAnalysisView: View {
 // MARK: - Preview
 
 #Preview {
-    ConlAnalysisView(
+    SoxlAnalysisView(
         authManager: .shared,
         apiClient: APIClient(authManager: .shared)
     )
