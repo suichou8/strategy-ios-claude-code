@@ -1,5 +1,5 @@
 //
-//  ConlAnalysisView.swift
+//  TsllAnalysisView.swift
 //  CatchTrendPackage
 //
 //  Created by Claude Code on 2025/11/09.
@@ -9,11 +9,11 @@ import SwiftUI
 import NetworkKit
 import Shared
 
-public struct ConlAnalysisView: View {
-    @State private var viewModel: ConlAnalysisViewModel
+public struct TsllAnalysisView: View {
+    @State private var viewModel: TsllAnalysisViewModel
 
     public init(authManager: AuthManager, apiClient: APIClient) {
-        self._viewModel = State(wrappedValue: ConlAnalysisViewModel(
+        self._viewModel = State(wrappedValue: TsllAnalysisViewModel(
             authManager: authManager,
             apiClient: apiClient
         ))
@@ -37,7 +37,7 @@ public struct ConlAnalysisView: View {
                     emptyStateView
                 }
             }
-            .navigationTitle("CONL 分析报告")
+            .navigationTitle("TSLL 分析报告")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -76,7 +76,7 @@ public struct ConlAnalysisView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
-            Text("正在加载 CONL 分析数据...")
+            Text("正在加载 TSLL 分析数据...")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -447,7 +447,7 @@ public struct ConlAnalysisView: View {
     /// 分享分析报告
     private func shareAnalysis(_ analysis: String) {
         let activityVC = UIActivityViewController(
-            activityItems: ["CONL 分析报告\n\n\(analysis)"],
+            activityItems: ["TSLL 分析报告\n\n\(analysis)"],
             applicationActivities: nil
         )
 
@@ -461,7 +461,7 @@ public struct ConlAnalysisView: View {
 // MARK: - Preview
 
 #Preview {
-    ConlAnalysisView(
+    TsllAnalysisView(
         authManager: .shared,
         apiClient: APIClient(authManager: .shared)
     )

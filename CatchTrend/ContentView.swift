@@ -17,8 +17,8 @@ struct ContentView: View {
         // 根据认证状态显示不同的视图
         // AuthManager 使用 @Observable，状态变化会自动触发视图更新
         if authManager.isAuthenticated {
-            // 已登录 - 显示 CONL 分析页
-            ConlAnalysisView(
+            // 已登录 - 显示主 Tab 页
+            MainTabView(
                 authManager: authManager,
                 apiClient: apiClient
             )

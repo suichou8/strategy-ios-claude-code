@@ -13,26 +13,54 @@ struct LoginButton: View {
     let isEnabled: Bool
     let action: () -> Void
 
+    // 计算视觉上是否应该显示为"启用"状态
+    // loading 时也显示为启用状态，保持蓝色
+    private var visuallyEnabled: Bool {
+        isEnabled || isLoading
+    }
+
     var body: some View {
         Button(action: action) {
-            HStack {
+            HStack(spacing: 8) {
                 if isLoading {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Text("登录")
+                        .font(.body)
                         .fontWeight(.semibold)
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
-            .background(isEnabled ? Color.blue : Color.gray)
-            .foregroundStyle(.white)
-            .cornerRadius(12)
+            .frame(height: 52)
+            .background(
+                Group {
+                    if visuallyEnabled {
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.blue,
+                                Color.blue.opacity(0.8)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    } else {
+                        Color(.systemGray5)
+                    }
+                }
+            )
+            .foregroundStyle(visuallyEnabled ? .white : Color(.systemGray3))
+            .cornerRadius(14)
+            .shadow(
+                color: visuallyEnabled ? Color.blue.opacity(0.3) : Color.clear,
+                radius: 8,
+                x: 0,
+                y: 4
+            )
         }
-        .disabled(!isEnabled)
+        .disabled(!isEnabled || isLoading)
         .padding(.horizontal, 32)
-        .padding(.top, 8)
+        .padding(.top, 12)
     }
 }
 

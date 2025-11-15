@@ -11,18 +11,23 @@ import SwiftUI
 struct LoginFormView: View {
     @Binding var username: String
     @Binding var password: String
+    @State private var isPasswordVisible = false
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // 用户名输入
             FormFieldView(
                 label: "用户名",
                 placeholder: "请输入用户名"
             ) {
                 TextField("请输入用户名", text: $username)
-                    .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .font(.body)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
             }
 
             // 密码输入
@@ -30,15 +35,30 @@ struct LoginFormView: View {
                 label: "密码",
                 placeholder: "请输入密码"
             ) {
-                SecureField("请输入密码", text: $password)
-                    .textFieldStyle(.roundedBorder)
-            }
+                HStack(spacing: 0) {
+                    Group {
+                        if isPasswordVisible {
+                            TextField("请输入密码", text: $password)
+                        } else {
+                            SecureField("请输入密码", text: $password)
+                        }
+                    }
+                    .font(.body)
+                    .padding(.leading, 16)
+                    .padding(.vertical, 14)
 
-            // 提示信息
-            HintView(
-                icon: "info.circle",
-                message: "测试账号: sui / sui0617"
-            )
+                    Button(action: {
+                        isPasswordVisible.toggle()
+                    }) {
+                        Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
+                            .foregroundColor(.gray)
+                            .frame(width: 44, height: 44)
+                    }
+                    .padding(.trailing, 8)
+                }
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+            }
         }
         .padding(.horizontal, 32)
     }
@@ -60,23 +80,6 @@ private struct FormFieldView<Content: View>: View {
 
             content()
         }
-    }
-}
-
-/// 提示信息视图
-private struct HintView: View {
-    let icon: String
-    let message: String
-
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.caption)
-            Text(message)
-                .font(.caption)
-        }
-        .foregroundStyle(.secondary)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

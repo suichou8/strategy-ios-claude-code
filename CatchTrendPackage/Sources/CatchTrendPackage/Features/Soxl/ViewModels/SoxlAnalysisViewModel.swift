@@ -1,8 +1,8 @@
 //
-//  ConlAnalysisViewModel.swift
+//  SoxlAnalysisViewModel.swift
 //  CatchTrendPackage
 //
-//  Created by Claude Code on 2025/11/09.
+//  Created by Claude Code on 2025/11/16.
 //
 
 import Foundation
@@ -10,14 +10,14 @@ import Observation
 import NetworkKit
 import Shared
 
-/// CONL 分析报告视图模型
-/// 负责处理 CONL 股票的分析数据加载
+/// SOXL 分析报告视图模型
+/// 负责处理 SOXL 股票的分析数据加载
 @MainActor
 @Observable
-public final class ConlAnalysisViewModel {
+public final class SoxlAnalysisViewModel {
     // MARK: - Published State
 
-    /// CONL 结构化分析数据
+    /// SOXL 结构化分析数据
     var analysisData: ConlAnalysisResponse?
 
     /// 是否正在加载分析数据
@@ -37,8 +37,8 @@ public final class ConlAnalysisViewModel {
 
     // MARK: - Constants
 
-    /// CONL 股票代码
-    private let symbol = "conl"
+    /// SOXL 股票代码
+    private let symbol = "soxl"
 
     // MARK: - Initialization
 
@@ -47,14 +47,14 @@ public final class ConlAnalysisViewModel {
         self.apiClient = apiClient
 
         // 初始化时自动加载数据，避免 tab 切换时重复请求
-        Task {
-            await loadAnalysis()
-        }
+//        Task {
+//            await loadAnalysis()
+//        }
     }
 
     // MARK: - Public Methods
 
-    /// 加载 CONL 分析数据
+    /// 加载 SOXL 分析数据
     func loadAnalysis() async {
         guard !isLoadingAnalysis else { return }
 
